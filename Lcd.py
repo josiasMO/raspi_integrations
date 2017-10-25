@@ -21,15 +21,18 @@ class Lcd(object):
         self.lcd = LCD.Adafruit_CharLCD(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6,
                                         LCD_D7, LCD_COLUMNS, LCD_LINES, LCD_BL)
 
-    def show_message(self, message, line=0):
+    def show_message(self, message, message2=''):
         """Shows a message in the choosen line
             Parameters: - message: text to be showed
                         - line: 0 or 1
         """
-        if line == 0:
-            self.lcd.message(message)
-        else:
-            self.lcd.message("\n" + message)
+        self.clear_display()
+        self.lcd.message(message)
+        self.lcd.message("\n" + message2)
+        # if line == 0:
+        #     self.lcd.message(message)
+        # else:
+        #     self.lcd.message("\n" + message)
 
     def clear_display(self):
         """Clear both display lines"""

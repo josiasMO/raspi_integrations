@@ -1,3 +1,5 @@
+"""Keypad Manipulation Module"""
+
 import RPi.GPIO as GPIO
 
 GPIO.setmode(GPIO.BCM)
@@ -10,9 +12,8 @@ MATRIX = [[1, 2, 3, 'A'],
 ROW = [19, 13, 6, 5]  # Inputs of the keypad
 COL = [22, 27, 17, 4]  # Outputs of the keypad
 
-
 class Keypad(object):
-    """   """
+    """Keypad class"""
     def __init__(self):
         for j in range(4):
             GPIO.setup(COL[j], GPIO.OUT)
@@ -25,7 +26,7 @@ class Keypad(object):
         num = 1
         try:
             pressed_key = ""
-            while (num>0):
+            while num > 0:
                 for j in range(4):
                     GPIO.output(COL[j], 0)
 
@@ -34,7 +35,7 @@ class Keypad(object):
 
                             pressed_key = str(MATRIX[i][j])  # append the key pressed on the keypad
                             num -= 1
-                            while (GPIO.input(ROW[i]) == 0):
+                            while GPIO.input(ROW[i]) == 0:
                                 pass
 
                     GPIO.output(COL[j], 1)
@@ -44,11 +45,9 @@ class Keypad(object):
         except KeyboardInterrupt:
             GPIO.cleanup()
 
-
-if __name__ == "__main__":
-
-    keypad = Keypad()
-
-    while True:
-        print(keypad.read_key())
-
+# if __name__ == "__main__":
+#
+#     keypad = Keypad()
+#
+#     while True:
+#         print(keypad.read_key())
