@@ -63,6 +63,23 @@ class Buzzer():
             self.off()
             sleep(0.25)
 
+        elif type == "func_menu":
+            self.on()
+            sleep(0.02)
+            self.off()
+            sleep(0.02)
+            self.on()
+            sleep(0.02)
+            self.off()
+            sleep(0.5)
+            self.on()
+            sleep(0.02)
+            self.off()
+            sleep(0.02)
+            self.on()
+            sleep(0.02)
+            self.off()
+
         elif type == "start_journey":
             self.on()
             sleep(0.05)
