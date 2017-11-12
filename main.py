@@ -5,17 +5,19 @@ from time import sleep
 from Lcd import Lcd
 from Keypad import Keypad
 from Buzzer import Buzzer
+from Gprs import GPRS
 
 
 def main():
     lcd = Lcd()
     keypad = Keypad()
     buzzer = Buzzer()
+    gprs = GPRS()
 
     current_state = 0
 
-    passwd = "666"
-    codigo_veiculo = "666"
+    passwd = "33"
+    codigo_veiculo = "33"
     codigo_motorista = ""
     codigo_linha = ""
 
@@ -134,7 +136,13 @@ def main():
         elif current_state == 4:
             lcd.show_message("Enviando", "Dados")
             ######HERE GOES THE CODE TO SEND THE DATA TO THE SERVER#####
-            sleep(3)
+            recv = []
+            while True:
+                recv = gprs.send([codigo_veiculo,codigo_motorista,codigo_linha])
+                if recv:
+                    break
+                sleep(10)
+
             lcd.show_message("Dados", "Enviados")
             current_state = 5
             lcd.show_message("Jornada", "Iniciada")
