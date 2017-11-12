@@ -8,3 +8,7 @@ cd ~
 git clone https://github.com/adafruit/Adafruit_Python_CharLCD.git
 cd Adafruit_Python_CharLCD
 sudo python3 setup.py install
+
+cd ~/sysjourney/crx1_tracker
+chmod +x ./ppp-creator.sh
+sudo ./ppp-creator.sh APN ttySERIAL
