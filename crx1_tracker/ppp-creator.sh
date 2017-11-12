@@ -18,7 +18,6 @@ TIMEOUT 30
 \"\" AT
 OK ATE0
 OK ATH
-OK AT+CGATT=0
 # OK ATI;+CSUB;+CSQ;+CPIN?;+COPS?;+CGREG?;&D2
 OK AT+CFUN=1,0
 
@@ -36,7 +35,6 @@ CONNECT" > /etc/chatscripts/quectel-chat-connect
 echo "creating script file : /etc/chatscripts/quectel-chat-disconnect"
 echo "
 SAY             \"\n + dropping data connection\"
-OK              'AT+CGATT=0'
 ABORT           'BUSY'
 ABORT           'ERROR'
 ABORT           'NO DIALTONE'
