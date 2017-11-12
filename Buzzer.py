@@ -4,7 +4,7 @@
 import RPi.GPIO as GPIO
 from time import sleep
 
-BUZZERPIN = 26  # Raspberry Pi Pin 17-GPIO 17
+BUZZERPIN = 4 
 
 class Buzzer():
     """Sound generator using buzzer"""
@@ -130,11 +130,11 @@ class Buzzer():
 
 
 
-# if __name__ == '__main__':  # Program start from here
-#     buzzer = Buzzer()
-# try:
-#     buzzer.beep("confirm")
-#     sleep(3)
-#     buzzer.beep("cancel")
-# except KeyboardInterrupt:  # When 'Ctrl+C' is pressed, the child program destroy() will be executed.
-#     buzzer.destroy()
+#if __name__ == '__main__':  # Program start from here
+#    buzzer = Buzzer()
+#    try:
+#        buzzer.beep("confirm")
+#        sleep(3)
+#        buzzer.beep("cancel")
+#    except KeyboardInterrupt:  # When 'Ctrl+C' is pressed, the child program destroy() will be executed.
+#        buzzer.destroy()
