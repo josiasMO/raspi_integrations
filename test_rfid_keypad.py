@@ -14,68 +14,65 @@ codigo_motorista = ""
 
 keypad = Keypad()
 buzzer = Buzzer()
+lcd = Lcd()
 rfid = Rfid()
 lock = Lock()
 
 CARDS = ["[154, 99, 3, 197, 63]", "[151, 25, 214, 53, 109]"]
 KEYCHAINS = ["[213, 1, 9, 136, 85]", "[5, 214, 17, 136, 74]"]
 
+control = True
 
 def read_keypad():
-    global codigo_motorista
-    key = keypad.read_key()
+    global codigo_motorista, control
+    keys = ""
+    while control:
+        lcd.show_message("Cod Motorista: ", keys)
+        key = keypad.read_key()
+        if key == "0" or key == "1" or key == "2" or key == "3" or key == "4" or \
+                        key == "5" or key == "6" or key == "7" or key == "8" or key == "9":
+            keys += key
 
-    if key == "0" or key == "1" or key == "2" or key == "3" or key == "4" or \
-                    key == "5" or key == "6" or key == "7" or key == "8" or key == "9":
-
-        lock.acquire()
-        try:
-            codigo_motorista += key
-        finally:
-            lock.release()
-
-
-
-def read_rfid():
-    global codigo_motorista
-    while True:
-        uid = rfid.read_rfid_uid()
-        if uid:
-            # print(uid)
+        elif key == "A":
             lock.acquire()
             try:
-                codigo_motorista = CARDS.index(str(uid))
+                codigo_motorista = keys
+                control = False
             finally:
                 lock.release()
-                
 
-
-def print_value():
-    global codigo_motorista
-    while True:
+def read_rfid():
+    global codigo_motorista, control
+    uid = rfid.read_rfid()
+    if uid:
+        print(uid)
         lock.acquire()
         try:
-            print("Codigo do motorista", codigo_motorista)
+            codigo_motorista = CARDS.index(str(uid))
+            control = False
         finally:
             lock.release()
-        sleep(1)
 
+def manage_read():
+    global codigo_motorista, control
+    rfid_reader = Thread(name='read_rfid', target=read_rfid)
+    keypad_reader = Thread(name='read_keypad', target=read_keypad)
+
+    rfid_reader.daemon = True
+    keypad_reader.daemon = True
+    rfid_reader.start()
+    keypad_reader.start()
+
+    while control:
+        pass
 
 def main():
-    rfid_reader = Thread(name='read_rfid', target=read_rfid)
-    #keypad_reader = Thread(name='read_keypad', target=read_keypad)
-    print_codigo = Thread(name='print_value', target=print_value)
+    global codigo_motorista, control
+    read_manager = Thread(name='read_manager', target=manage_read)
+    read_manager.start()
+    read_manager.join()
 
-    rfid_reader.start()
-    #keypad_reader.start()
-    print_codigo.start()
-
-
-    rfid_reader.join()
-   # keypad_reader.join()
-    print_codigo.join()
-
-
+    print("Codigo do motorista: ", codigo_motorista)
 
 if __name__ == "__main__":
     main()
