@@ -1,0 +1,1 @@
+{"vehicle": [{"codigo_motorista": "856", "passwd": "666", "codigo_linha": "085", "current_state": 1, "codigo_veiculo": "147"}]}
