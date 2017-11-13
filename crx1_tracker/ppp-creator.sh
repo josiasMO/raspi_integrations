@@ -39,12 +39,7 @@ ABORT           'BUSY'
 ABORT           'ERROR'
 ABORT           'NO DIALTONE'
 TIMEOUT         30
-'NO CARRIER'    'ATH'
-''              '+++\c'
-SAY             \" + sending break\"
-SAY             \"\n + disconnecting from GPRS\"
-OK              '\c'
-SAY             \"\n + disconnected.\"
+OK              AT+CGACT=0,1
 " > /etc/chatscripts/quectel-chat-disconnect
 
 
