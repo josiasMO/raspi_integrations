@@ -26,25 +26,25 @@ class Rfid(object):
 
         # If we have the UID, continue
         if status == self.reader.MI_OK:
-            return uid
+            print("UID: ", str(uid))
 
-#
-# # Capture SIGINT for cleanup when the script is aborted
-# def end_read(signal,frame):
-#     global continue_reading
-#     print "Ctrl+C captured, ending read."
-#     continue_reading = False
-#     GPIO.cleanup()
-#     exit(1)
-#
-# # Hook the SIGINT
-# signal.signal(signal.SIGINT, end_read)
-#
-#
-# if __name__ == '__main__':
-#     rfid_reader =  Rfid()
-#
-#     while True:
-#         uid = rfid_reader.read_rfid_uid()
-#         if uid:
-#             print(uid)
+
+# Capture SIGINT for cleanup when the script is aborted
+def end_read(signal,frame):
+    global continue_reading
+    print "Ctrl+C captured, ending read."
+    continue_reading = False
+    GPIO.cleanup()
+    exit(1)
+
+# Hook the SIGINT
+signal.signal(signal.SIGINT, end_read)
+
+
+if __name__ == '__main__':
+    rfid_reader =  Rfid()
+
+    while True:
+        uid = rfid_reader.read_rfid_uid()
+        if uid:
+            print(uid)

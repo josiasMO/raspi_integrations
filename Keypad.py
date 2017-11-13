@@ -8,9 +8,8 @@ MATRIX = [[1, 2, 3, 'A'],
           [4, 5, 6, 'B'],
           [7, 8, 9, 'C'],
           ['*', 0, '#', 'D']]
-
-ROW = [19, 13, 6, 5]  # Inputs of the keypad
-COL = [22, 27, 17, 4]  # Outputs of the keypad
+ROW = [26, 19, 13, 6]  # Inputs of the keypad
+COL = [5, 22, 27, 17]  # Outputs of the keypad
 
 class Keypad(object):
     """Keypad class"""
@@ -45,9 +44,7 @@ class Keypad(object):
         except KeyboardInterrupt:
             GPIO.cleanup()
 
-# if __name__ == "__main__":
-#
-#     keypad = Keypad()
-#
-#     while True:
-#         print(keypad.read_key())
+#if __name__ == "__main__":
+#    keypad = Keypad()
+#    while True:
+#        print(keypad.read_key())
