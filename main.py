@@ -174,18 +174,25 @@ def main():
             lcd.show_message("Enviando", "Dados")
             ######HERE GOES THE CODE TO SEND THE DATA TO THE SERVER#####
             recv = []
-            # while True:
-            #     recv = gprs.send([codigo_veiculo,codigo_motorista,codigo_linha])
-            #     if recv:
-            #         break
-            #     sleep(10)
-
-            lcd.show_message("Dados", "Enviados")
-            current_state = 5
-            write_json()
-            lcd.show_message("Jornada", "Iniciada")
-            buzzer.beep("start_journey")
-            sleep(5)
+            num = 1
+            while num<=4:
+                recv = gprs.send([codigo_veiculo,codigo_motorista,codigo_linha, '1'])
+                if recv:
+                    lcd.show_message("Dados", "Enviados")
+                    write_json()
+                    lcd.show_message("Jornada", "Iniciada")
+                    buzzer.beep("start_journey")
+                    sleep(5)
+                    current_state = 5
+                    break
+                elif(num == 4):
+                    lcd.show_message("Erro", "Envio")
+                    buzzer.beep("wrong_key")
+                    current_state = 0
+                    break
+                else:
+                    num+=1
+                    sleep(60)
 
         elif current_state == 5:
             lcd.show_message("Jornada", "em Progresso")
@@ -195,9 +202,26 @@ def main():
                 buzzer.beep("end_journey")
                 sleep(3)
                 ######HERE GOES THE CODE TO SEND THE DATA TO THE SERVER#####
-                lcd.show_message("Jornada", "Encerrada")
-                current_state = 0
-                write_json()
+                recv = []
+                num = 1
+                while num<=4:
+                    recv = gprs.send([codigo_veiculo,codigo_motorista,codigo_linha, '0'])
+                    if recv:
+                        lcd.show_message("Jornada", "Encerrada")
+                        buzzer.beep("end_journey")
+                        current_state = 0
+                        write_json()
+                        break
+                    elif(num == 4):
+                        lcd.show_message("Erro", "Envio")
+                        buzzer.beep("wrong_key")
+                        current_state = 5
+                        break
+                    else:
+                        num+=1
+                        sleep(60)
+
+
             else:
                 lcd.show_message("Tecla ", "Incorreta")
                 buzzer.beep("wrong_key")

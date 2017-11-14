@@ -128,6 +128,6 @@ class GPRS(object):
         return recv
 
 
-if __name__ == "__main__":
-    g = GPRS()
-    g.send(['15','35','43', '0'])
+# if __name__ == "__main__":
+#     g = GPRS()
+#     g.send(['15','35','43', '0'])
