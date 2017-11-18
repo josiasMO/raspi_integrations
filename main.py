@@ -15,6 +15,13 @@ codigo_veiculo = "33"
 codigo_motorista = ""
 codigo_linha = ""
 
+def convert_int(x):
+    tmp = int(x)
+    c = tmp >> 8
+    f = tmp % 256
+    return str(c), str(f)
+
+
 def write_json():
     global current_state, passwd, codigo_motorista, codigo_linha, codigo_veiculo
     data = {}
@@ -177,7 +184,11 @@ def main():
             recv = []
             num = 1
             while num<=4:
-                recv = gprs.send([codigo_veiculo,codigo_motorista,codigo_linha, '1'])
+                v = convert_int(codigo_veiculo)
+                m = convert_int(codigo_motorista)
+                l = convert_int(codigo_linha)
+
+                recv = gprs.send([v[0], v[1], m[0], m[1], l[0], l[1], '1'])
                 if recv:
                     lcd.show_message("Dados", "Enviados")
                     lcd.show_message("Jornada", "Iniciada")
@@ -206,7 +217,11 @@ def main():
                 num = 1
                 write_json()
                 while num<=4:
-                    recv = gprs.send([codigo_veiculo,codigo_motorista,codigo_linha, '0'])
+                    v = convert_int(codigo_veiculo)
+                    m = convert_int(codigo_motorista)
+                    l = convert_int(codigo_linha)
+
+                    recv = gprs.send([v[0], v[1], m[0], m[1], l[0], l[1], '0'])
                     if recv:
                         lcd.show_message("Jornada", "Encerrada")
                         buzzer.beep("end_journey")
