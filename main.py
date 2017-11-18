@@ -56,19 +56,19 @@ def main():
 
     while True:
         if current_state == 0:
-            lcd.show_message("Pressione", "*/Inicio")
+            lcd.show_message("Pressione", "Inicio")
             key = keypad.read_key()
-            if key == "*":
+            if key == "ini":
                 current_state = 1
                 buzzer.beep("start_journey")
                 write_json()
 
-            elif key == "B":
+            elif key == "fun":
                 current_state = 10
                 buzzer.beep("func_menu")
                 write_json()
 
-            elif key == "C":
+            elif key == "can":
                 current_state = 0
                 buzzer.beep("cancel")
                 write_json()
@@ -81,14 +81,14 @@ def main():
         elif current_state == 1:
             lcd.show_message("Codigo Veiculo: ", str(codigo_veiculo))
             sleep(3)
-            lcd.show_message("Pressione", "A/Confirma")
+            lcd.show_message("Pressione", "Confirma")
             key = keypad.read_key()
-            if key == "A":
+            if key == "con":
                 current_state = 2
                 buzzer.beep("confirm")
                 write_json()
 
-            elif key == "C":
+            elif key == "can":
                 current_state = 0
                 buzzer.beep("cancel")
                 write_json()
@@ -111,14 +111,14 @@ def main():
                     codigo_motorista += key
                     buzzer.beep("number")
 
-                elif key == "A":
+                elif key == "con":
                     current_state = 3
                     buzzer.beep("confirm")
                     write_json()
                     break
-                elif key == "C":
+                elif key == "can":
                     if codigo_motorista == "":
-                        lcd.show_message("Operacao Cancelada!!!")
+                        lcd.show_message("Operacao", "Cancelada!!!")
                         codigo_motorista = ""
                         buzzer.beep("cancel")
                         current_state = 1
@@ -147,14 +147,14 @@ def main():
                     codigo_linha += key
                     buzzer.beep("number")
 
-                elif key == "A":
+                elif key == "con":
                     current_state = 4
                     buzzer.beep("confirm")
                     write_json()
                     break
-                elif key == "C":
+                elif key == "can":
                     if codigo_linha == "":
-                        lcd.show_message("Operacao Cancelada!!!")
+                        lcd.show_message("Operacao", "Cancelada!!!")
                         codigo_linha = ""
                         current_state = 1
                         write_json()
@@ -173,13 +173,13 @@ def main():
         elif current_state == 4:
             lcd.show_message("Enviando", "Dados")
             ######HERE GOES THE CODE TO SEND THE DATA TO THE SERVER#####
+            write_json()
             recv = []
             num = 1
             while num<=4:
                 recv = gprs.send([codigo_veiculo,codigo_motorista,codigo_linha, '1'])
                 if recv:
                     lcd.show_message("Dados", "Enviados")
-                    write_json()
                     lcd.show_message("Jornada", "Iniciada")
                     buzzer.beep("start_journey")
                     sleep(5)
@@ -197,20 +197,20 @@ def main():
         elif current_state == 5:
             lcd.show_message("Jornada", "em Progresso")
             key = keypad.read_key()
-            if key == "#":
+            if key == "fim":
                 lcd.show_message("Encerrando", "Jornada")
                 buzzer.beep("end_journey")
                 sleep(3)
                 ######HERE GOES THE CODE TO SEND THE DATA TO THE SERVER#####
                 recv = []
                 num = 1
+                write_json()
                 while num<=4:
                     recv = gprs.send([codigo_veiculo,codigo_motorista,codigo_linha, '0'])
                     if recv:
                         lcd.show_message("Jornada", "Encerrada")
                         buzzer.beep("end_journey")
                         current_state = 0
-                        write_json()
                         break
                     elif(num == 4):
                         lcd.show_message("Erro", "Envio")
@@ -243,7 +243,7 @@ def main():
                 buzzer.beep("confirm")
                 write_json()
 
-            elif key == "C":
+            elif key == "can":
                 current_state = 0
                 buzzer.beep("cancel")
                 write_json()
@@ -266,7 +266,7 @@ def main():
                     senha += key
                     buzzer.beep("number")
 
-                elif key == "A":
+                elif key == "con":
                     buzzer.beep("confirm")
 
                     if senha == passwd:
@@ -280,9 +280,9 @@ def main():
                         senha = ""
                         write_json()
 
-                elif key == "C":
+                elif key == "can":
                     if codigo_veiculo == "":
-                        lcd.show_message("Operacao Cancelada!!!")
+                        lcd.show_message("Operacao", "Cancelada!!!")
                         current_state = 10
                         write_json()
                         sleep(3)
@@ -312,14 +312,14 @@ def main():
                     codigo_veiculo += key
                     buzzer.beep("number")
 
-                elif key == "A":
+                elif key == "con":
                     current_state = 13
                     buzzer.beep("confirm")
                     write_json()
                     break
-                elif key == "C":
+                elif key == "can":
                     if codigo_veiculo == "":
-                        lcd.show_message("Operacao Cancelada!!!")
+                        lcd.show_message("Operacao", "Cancelada!!!")
                         codigo_veiculo = ""
                         current_state = 1
                         write_json()
@@ -354,7 +354,7 @@ def main():
                     senha += key
                     buzzer.beep("number")
 
-                elif key == "A":
+                elif key == "con":
                     buzzer.beep("confirm")
 
                     if senha == passwd:
@@ -367,9 +367,9 @@ def main():
                         sleep(2)
                         senha = ""
 
-                elif key == "C":
+                elif key == "can":
                     if codigo_veiculo == "":
-                        lcd.show_message("Operacao Cancelada!!!")
+                        lcd.show_message("Operacao", "Cancelada!!!")
                         current_state = 10
                         write_json()
                         sleep(3)
@@ -396,15 +396,15 @@ def main():
                     senha += key
                     buzzer.beep("number")
 
-                elif key == "A":
+                elif key == "con":
                     passwd = senha
                     current_state = 23
                     write_json()
                     buzzer.beep("confirm")
                     break
-                elif key == "C":
+                elif key == "can":
                     if senha == "":
-                        lcd.show_message("Operacao Cancelada!!!")
+                        lcd.show_message("Operacao", "Cancelada!!!")
                         senha = ""
                         current_state = 1
                         write_json()
@@ -432,7 +432,7 @@ def main():
                     senha += key
                     buzzer.beep("number")
 
-                elif key == "A":
+                elif key == "con":
                     buzzer.beep("confirm")
                     if senha == passwd:
                         current_state = 0
@@ -443,9 +443,9 @@ def main():
                         current_state = 22
                         write_json()
 
-                elif key == "C":
+                elif key == "can":
                     if senha == "":
-                        lcd.show_message("Operacao Cancelada!!!")
+                        lcd.show_message("Operacao", "Cancelada!!!")
                         senha = ""
                         current_state = 1
                         write_json()
