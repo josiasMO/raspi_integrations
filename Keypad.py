@@ -44,8 +44,16 @@ class Keypad(object):
 
         except KeyboardInterrupt:
             GPIO.cleanup()
+<<<<<<< HEAD
 
 if __name__ == "__main__":
     keypad = Keypad()
     while True:
         print(keypad.read_key())
+=======
+#
+# if __name__ == "__main__":
+#     keypad = Keypad()
+#     while True:
+#         print(keypad.read_key())
+>>>>>>> 6daab8e5cccb1bb8bfb0463850f116a7b8766940

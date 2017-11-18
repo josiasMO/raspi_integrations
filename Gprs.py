@@ -8,6 +8,7 @@ import os, sys
 import time
 import logging
 import ctypes
+import binascii
 
 def crc16(datos, offset, length):
     crctab16 = (
@@ -52,9 +53,12 @@ def crc16(datos, offset, length):
     return ctypes.c_ushort(~fcs).value
 
 def encoder(data):
-    hex_dat = [hex(int(elem)) for elem in data]
-    send_data = b"\x78\x78\x05\x01" + data[0].encode("utf-8") + \
-                data[1].encode("utf-8") + data[2].encode("utf-8")
+
+    strpackage = '7878' + '%002x' % len(data) + '19'
+    for elem in data:
+        strpackage = strpackage + '%002x' % int(elem)
+
+    send_data = binascii.unhexlify(strpackage)
     send_chk = crc16(send_data[2:], 0, len(send_data) - 2)
     send_chk = bytearray([(send_chk & 0xFF00) >> 8, send_chk & 0x00FF])
     return (send_data + send_chk + b"\r\n")
@@ -78,7 +82,7 @@ class GPRS(object):
     def __conn(self, data):
         """Open tcp socket and send data to the specified host"""
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(15)
+        s.settimeout(35) #long timeout for gprs connections
         s.connect((self.host, self.port))
         s.sendall(data)
         recv = s.recv(1024)
@@ -98,13 +102,15 @@ class GPRS(object):
 
         t = threading.Thread(target=self.__procout, args=(proc,))
         t.start()
-        err = None
+        recv = None
         try:
             while proc.poll() is None:
                 if(self.__ppp0status()):
                     r = encoder(data)
-                    err = self.__conn (r)
-                    if err is not None:
+                    recv = self.__conn (r)
+                    if recv is not None:
+                        if (len(recv) > 5):
+                            recv = len(recv)
                         proc.terminate()
                 time.sleep(0.5)
         except socket.error as exc:
@@ -118,10 +124,10 @@ class GPRS(object):
             except subprocess.TimeoutExpired:
                 print('subprocess did not terminate in time')
             t.join()
-        print ('==Sent %s bytes==' % err)
-        return err
+        print ('==Sent %s bytes==' % recv)
+        return recv
 
 
-if __name__ == "__main__":
-    g = GPRS()
-    g.send(['15','35','43'])
+# if __name__ == "__main__":
+#     g = GPRS()
+#     g.send(['15','35','43', '0'])
