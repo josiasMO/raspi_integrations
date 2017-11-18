@@ -32,11 +32,10 @@ def listen():
 
 
                 strpackage = [int(p, 16) for p in strpackage]
-
-                print('Veiculo %d' % strpackage[4])
-                print('Motorista %d' % strpackage[5])
-                print('Linha %d' % strpackage[6])
-                print('Inicio/Fim %d' % strpackage[7])
+                print('Veiculo', strpackage[4]<<8 | strpackage[5])
+                print('Motorista', strpackage[6]<<8 | strpackage[7])
+                print('Linha ', strpackage[8]<<8 | strpackage[9])
+                print('Inicio/Fim %d' % strpackage[10])
 
 
                 current_connection.send(data)
