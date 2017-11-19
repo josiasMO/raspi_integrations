@@ -22,11 +22,11 @@ class Keypad(object):
         for i in range(5):
             GPIO.setup(ROW[i], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-    def read_key(self):
+    def read_key(self, event=False):
         num = 1
         try:
             pressed_key = ""
-            while num > 0:
+            while num > 0 and (not event or not event.is_set()):
                 for j in range(3):
                     GPIO.output(COL[j], 0)
 
@@ -44,16 +44,9 @@ class Keypad(object):
 
         except KeyboardInterrupt:
             GPIO.cleanup()
-<<<<<<< HEAD
 
-if __name__ == "__main__":
-    keypad = Keypad()
-    while True:
-        print(keypad.read_key())
-=======
-#
+
 # if __name__ == "__main__":
 #     keypad = Keypad()
 #     while True:
 #         print(keypad.read_key())
->>>>>>> 6daab8e5cccb1bb8bfb0463850f116a7b8766940

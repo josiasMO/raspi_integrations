@@ -7,7 +7,7 @@ LCD_EN = 23 #23
 LCD_D4 = 12 #12
 LCD_D5 = 16 #16
 LCD_D6 = 20 #20
-LCD_D7 = 25 #21
+LCD_D7 = 21 #21
 LCD_BL = 4  #4
 
 # Defines the number of columns and lines

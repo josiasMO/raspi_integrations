@@ -2,25 +2,46 @@
 
 from time import sleep
 import json
+from threading import Thread, Lock, Event
+from queue import Queue
+
 from Lcd import Lcd
 from Keypad import Keypad
 from Buzzer import Buzzer
 from Gprs import GPRS
+from Rfid import Rfid
 
 
+######### State Machine Variables ##########
 current_state = 0
-
 passwd = "33"
 codigo_veiculo = "33"
 codigo_motorista = ""
 codigo_linha = ""
+############################################
+
+######### Instances of the Modules #########
+lcd = Lcd()
+keypad = Keypad()
+buzzer = Buzzer()
+gprs = GPRS()
+rfid = Rfid()
+############################################
+
+############ Rfid variables  ###############
+CARDS = ["[154, 99, 3, 197, 63]", "[151, 25, 214, 53, 109]"]
+KEYCHAINS = ["[213, 1, 9, 136, 85]", "[5, 214, 17, 136, 74]"]
+
+RFID_PRESENT = True
+lock = Lock()
+read_result = ""
+############################################
 
 def convert_int(x):
     tmp = int(x)
     c = tmp >> 8
     f = tmp % 256
     return str(c), str(f)
-
 
 def write_json():
     global current_state, passwd, codigo_motorista, codigo_linha, codigo_veiculo
@@ -46,14 +67,95 @@ def read_json():
         codigo_motorista = data['vehicle'][0]['codigo_motorista']
         codigo_linha = data['vehicle'][0]['codigo_linha']
 
+def cancel():
+    global current_state
+    current_state = 0
+    buzzer.beep("cancel")
+    write_json()
+
+def confirm(buzzer_beep, state=None):
+    global current_state
+    current_state = state
+    buzzer.beep(buzzer_beep)
+    write_json()
+
+def wrong_key():
+    lcd.show_message("Tecla ", "Incorreta")
+    buzzer.beep("wrong_key")
+    sleep(2)
+
+def return_state(state=None):
+    global current_state
+    lcd.show_message("Operacao", "Cancelada!!!")
+    buzzer.beep("cancel")
+    current_state = state
+    write_json()
+    sleep(3)
+
+
+def read_codes(message1, message2, message_ini="Informe Codigo", current_val="", event=False):
+    lcd.show_message(message_ini, message1)
+    sleep(2)
+    value = current_val
+    while True:
+        lcd.show_message(message2, str(value))
+        key = keypad.read_key(event)
+
+        if key == "":
+            return None
+
+        elif key == "0" or key == "1" or key == "2" or key == "3" or key == "4" or\
+                   key == "5" or key == "6" or key == "7" or key == "8" or key == "9":
+            value += str(key)
+            buzzer.beep("number")
+
+        elif key == "con":
+            return value
+
+        elif key == "can":
+            if value == "":
+                return -1
+
+            else:  # Remove last char from string
+                value = value[:-1]
+                buzzer.beep("number")
+        else:
+            wrong_key()
+
+def read_rfid(event, linha):
+    valid = False
+    value = ""
+    while (not event.is_set()):
+        uid = str(rfid.read_rfid(event))
+        if (uid in KEYCHAINS) and linha:
+            value = KEYCHAINS.index(str(uid)) + 1
+            break
+        elif (uid in CARDS) and not linha:
+            value = CARDS.index(str(uid)) + 1
+            break
+    return str(value)
+
+def manage_read(linha, message1="", message2="", message_ini="Informe Codigo", current_val=""):
+    global read_result
+    event = Event()
+    que = Queue()
+
+    if RFID_PRESENT:
+        rfid_reader = Thread(target=lambda q, e, l: q.put(read_rfid(e, l)), args=(que, event, linha))
+        rfid_reader.start()
+
+    keypad_reader = Thread(target=lambda q, e,  m1, m2, m3, cv: q.put(read_codes(m1, m2, m3, cv, e)),
+                           args=(que, event, message1, message2, message_ini, current_val,))
+
+    keypad_reader.start()
+
+    while que.empty():
+        pass
+    read_result = que.get()
+    event.set()
 
 def main():
-    global current_state, passwd, codigo_motorista, codigo_linha, codigo_veiculo
-
-    lcd = Lcd()
-    keypad = Keypad()
-    buzzer = Buzzer()
-    gprs = GPRS()
+    global current_state, passwd, codigo_motorista, codigo_linha, codigo_veiculo, read_result
 
     read_json()
 
@@ -62,121 +164,71 @@ def main():
     sleep(3)
 
     while True:
+
+        ########################Inicio########################
         if current_state == 0:
             lcd.show_message("Pressione", "Inicio")
             key = keypad.read_key()
             if key == "ini":
-                current_state = 1
-                buzzer.beep("start_journey")
-                write_json()
+                confirm("start_journey", 1)
 
             elif key == "fun":
-                current_state = 10
-                buzzer.beep("func_menu")
-                write_json()
+                confirm("func_menu", 10)
 
             elif key == "can":
-                current_state = 0
-                buzzer.beep("cancel")
-                write_json()
+                cancel()
 
             else:
-                lcd.show_message("Opcao ", "Incorreta")
-                buzzer.beep("wrong_key")
-                sleep(2)
+                wrong_key()
 
+        ######################## Confirma Codigo do Veiculo ########################
         elif current_state == 1:
             lcd.show_message("Codigo Veiculo: ", str(codigo_veiculo))
             sleep(3)
             lcd.show_message("Pressione", "Confirma")
             key = keypad.read_key()
             if key == "con":
-                current_state = 2
-                buzzer.beep("confirm")
-                write_json()
+                confirm("confirm", 2)
 
             elif key == "can":
-                current_state = 0
-                buzzer.beep("cancel")
-                write_json()
+                return_state(0)
 
             else:
-                lcd.show_message("Tecla ", "Incorreta")
-                buzzer.beep("wrong_key")
-                sleep(2)
+                wrong_key()
 
+        ######################## Informa Codigo do Motorista ########################
         elif current_state == 2:
-            lcd.show_message("Informe Codigo", "do Motorista: ")
-            sleep(3)
-            while True:
-                lcd.show_message("Cod Motorista: ", codigo_motorista)
-                key = keypad.read_key()
+            thread = Thread(target=manage_read,
+                            args=(False, "do Motorista: ", "Cod Motorista: ", "Informe Codigo", codigo_motorista))
+            thread.start()
+            thread.join()
+            value = read_result
+            read_result = ""
 
-                if key == "0" or key == "1" or key == "2" or key == "3" or key == "4" or\
-                   key == "5" or key == "6" or key == "7" or key == "8" or key == "9":
+            # value = read_codes("do Motorista: ", "Cod Motorista: ", current_val=codigo_motorista)
+            if value == -1:
+                codigo_motorista = ""
+                return_state(1)
+            else:
+                codigo_motorista = value
+                confirm("confirm", 3)
 
-                    codigo_motorista += key
-                    buzzer.beep("number")
-
-                elif key == "con":
-                    current_state = 3
-                    buzzer.beep("confirm")
-                    write_json()
-                    break
-                elif key == "can":
-                    if codigo_motorista == "":
-                        lcd.show_message("Operacao", "Cancelada!!!")
-                        codigo_motorista = ""
-                        buzzer.beep("cancel")
-                        current_state = 1
-                        write_json()
-                        sleep(3)
-                        break
-                    else: #Remove last char from string
-                        codigo_motorista = codigo_motorista[:-1]
-                        buzzer.beep("number")
-
-                else:
-                    lcd.show_message("Tecla ", "Incorreta")
-                    buzzer.beep("wrong_key")
-                    sleep(2)
-
+        ######################## Informa Codigo da Linha ########################
         elif current_state == 3:
-            lcd.show_message("Informe Codigo", "da Linha:")
-            sleep(3)
-            while True:
-                lcd.show_message("Cod da Linha: ", codigo_linha)
-                key = keypad.read_key()
+            thread = Thread(target=manage_read,
+                             args=(True, "da Linha: ", "Cod da Linha: ", "Informe Codigo", codigo_linha))
+            thread.start()
+            thread.join()
+            value = read_result
+            read_result = ""
+            if value == -1:
+                codigo_linha = ""
+                return_state(2)
+            else:
+                codigo_linha = value
+                confirm("confirm", 4)
 
-                if key == "0" or key == "1" or key == "2" or key == "3" or key == "4" or\
-                    key == "5" or key == "6" or key == "7" or key == "8" or key == "9":
-
-                    codigo_linha += key
-                    buzzer.beep("number")
-
-                elif key == "con":
-                    current_state = 4
-                    buzzer.beep("confirm")
-                    write_json()
-                    break
-                elif key == "can":
-                    if codigo_linha == "":
-                        lcd.show_message("Operacao", "Cancelada!!!")
-                        codigo_linha = ""
-                        current_state = 1
-                        write_json()
-                        sleep(3)
-                        buzzer.beep("cancel")
-                        break
-                    else: #Remove last char from string
-                        codigo_linha = codigo_linha[:-1]
-                        buzzer.beep("number")
-
-                else:
-                    lcd.show_message("Tecla ", "Incorreta")
-                    buzzer.beep("wrong_key")
-                    sleep(2)
-
+        ######################## Envio dos Dados / Jornada Iniciada ########################
         elif current_state == 4:
             lcd.show_message("Enviando", "Dados")
             ######HERE GOES THE CODE TO SEND THE DATA TO THE SERVER#####
@@ -192,9 +244,7 @@ def main():
                 if recv:
                     lcd.show_message("Dados", "Enviados")
                     lcd.show_message("Jornada", "Iniciada")
-                    buzzer.beep("start_journey")
-                    sleep(5)
-                    current_state = 5
+                    confirm("start_journey", 5)
                     break
                 elif(num == 4):
                     lcd.show_message("Erro", "Envio")
@@ -205,13 +255,13 @@ def main():
                     num+=1
                     sleep(60)
 
+        ######################## Jornada Encerrada / Envio dos Dados ########################
         elif current_state == 5:
             lcd.show_message("Jornada", "em Progresso")
             key = keypad.read_key()
             if key == "fim":
                 lcd.show_message("Encerrando", "Jornada")
                 buzzer.beep("end_journey")
-                sleep(3)
                 ######HERE GOES THE CODE TO SEND THE DATA TO THE SERVER#####
                 recv = []
                 num = 1
@@ -224,6 +274,7 @@ def main():
                     recv = gprs.send([v[0], v[1], m[0], m[1], l[0], l[1], '0'])
                     if recv:
                         lcd.show_message("Jornada", "Encerrada")
+                        confirm("end_journey")
                         buzzer.beep("end_journey")
                         current_state = 0
                         break
@@ -235,12 +286,8 @@ def main():
                     else:
                         num+=1
                         sleep(60)
-
-
             else:
-                lcd.show_message("Tecla ", "Incorreta")
-                buzzer.beep("wrong_key")
-                sleep(2)
+                wrong_key()
 
         ######################## MENU FUNCAO ########################
         elif current_state == 10:
@@ -259,223 +306,82 @@ def main():
                 write_json()
 
             elif key == "can":
-                current_state = 0
-                buzzer.beep("cancel")
-                write_json()
+                cancel()
+            else:
+                wrong_key()
+
+        ######################## ALTERAR CODIGO DO VEICULO ########################
+        ######################## Informa Senha Atual ########################
+        elif current_state == 11:
+            senha = read_codes("", "Informe Senha: ", "")
+
+            if senha == -1:
+                lcd.show_message("Operacao", "Cancelada!!!")
+                return_state(10)
+
+            elif senha == passwd:
+                confirm("confirm", 12)
 
             else:
-                lcd.show_message("Tecla ", "Incorreta")
+                lcd.show_message("Senha", "Incorreta")
                 buzzer.beep("wrong_key")
                 sleep(2)
 
-        ######################## ALTERAR CODIGO DO VEICULO ########################
-        elif current_state == 11:
-            senha = ""
-            while True:
-                lcd.show_message("Informe Senha: ", senha)
-                key = keypad.read_key()
-
-                if key == "0" or key == "1" or key == "2" or key == "3" or key == "4" or\
-                    key == "5" or key == "6" or key == "7" or key == "8" or key == "9":
-
-                    senha += key
-                    buzzer.beep("number")
-
-                elif key == "con":
-                    buzzer.beep("confirm")
-
-                    if senha == passwd:
-                        current_state = 12
-                        write_json()
-                        break
-                    else:
-                        lcd.show_message("Senha", "Incorreta")
-                        buzzer.beep("wrong_key")
-                        sleep(2)
-                        senha = ""
-                        write_json()
-
-                elif key == "can":
-                    if codigo_veiculo == "":
-                        lcd.show_message("Operacao", "Cancelada!!!")
-                        current_state = 10
-                        write_json()
-                        sleep(3)
-                        buzzer.beep("cancel")
-                        break
-                    else: #Remove last char from string
-                        senha = senha[:-1]
-                        buzzer.beep("number")
-
-                else:
-                    lcd.show_message("Tecla", "Incorreta")
-                    buzzer.beep("wrong_key")
-                    sleep(2)
-
+        ######################## Informa Codigo da Veiculo ########################
         elif current_state == 12:
-            codigo_veiculo = ""
-            lcd.show_message("Alterar Cod.", "Veiculo")
-            sleep(3)
-            lcd.show_message("Cod. Veiculo")
-            while True:
-                lcd.show_message("Cod. Veiculo: ", codigo_veiculo)
-                key = keypad.read_key()
+            value = read_codes("do Veiculo:", "Cod. Veiculo", current_val=codigo_veiculo)
+            if value == -1:
+                codigo_veiculo = ""
+                return_state(1)
+            else:
+                codigo_veiculo = value
+                confirm("confirm")
+                sleep(3)
+                lcd.show_message("Cod Veiculo", "Alterado")
+                confirm("confirm", 0)
 
-                if key == "0" or key == "1" or key == "2" or key == "3" or key == "4" or\
-                    key == "5" or key == "6" or key == "7" or key == "8" or key == "9":
-
-                    codigo_veiculo += key
-                    buzzer.beep("number")
-
-                elif key == "con":
-                    current_state = 13
-                    buzzer.beep("confirm")
-                    write_json()
-                    break
-                elif key == "can":
-                    if codigo_veiculo == "":
-                        lcd.show_message("Operacao", "Cancelada!!!")
-                        codigo_veiculo = ""
-                        current_state = 1
-                        write_json()
-                        sleep(3)
-                        buzzer.beep("cancel")
-                        break
-                    else: #Remove last char from string
-                        codigo_veiculo = codigo_veiculo[:-1]
-                        buzzer.beep("number")
-
-                else:
-                    lcd.show_message("Tecla ", "Incorreta")
-                    buzzer.beep("wrong_key")
-                    sleep(2)
-
-        elif current_state == 13:
-            lcd.show_message("Cod Veiculo", "Alterado")
-            sleep(3)
-            current_state = 0
-            write_json()
-
-        ######################## ALTERAR CODIGO DO VEICULO ########################
+        ######################## ALTERAR SENHA ########################
+        ######################## Informa Senha Atual ########################
         elif current_state == 21:
-            senha = ""
-            while True:
-                lcd.show_message("Informe Senha: ", senha)
-                key = keypad.read_key()
+            senha = read_codes("", "Informe Senha: ", "")
 
-                if key == "0" or key == "1" or key == "2" or key == "3" or key == "4" or\
-                    key == "5" or key == "6" or key == "7" or key == "8" or key == "9":
+            if senha == -1:
+                lcd.show_message("Operacao", "Cancelada!!!")
+                return_state(10)
 
-                    senha += key
-                    buzzer.beep("number")
+            elif senha == passwd:
+                confirm("confirm", 22)
 
-                elif key == "con":
-                    buzzer.beep("confirm")
+            else:
+                lcd.show_message("Senha", "Incorreta")
+                buzzer.beep("wrong_key")
+                sleep(2)
 
-                    if senha == passwd:
-                        current_state = 22
-                        write_json()
-                        break
-                    else:
-                        lcd.show_message("Senha", "Incorreta")
-                        buzzer.beep("wrong_key")
-                        sleep(2)
-                        senha = ""
-
-                elif key == "can":
-                    if codigo_veiculo == "":
-                        lcd.show_message("Operacao", "Cancelada!!!")
-                        current_state = 10
-                        write_json()
-                        sleep(3)
-                        buzzer.beep("cancel")
-                        break
-                    else: #Remove last char from string
-                        senha = senha[:-1]
-                        buzzer.beep("number")
-
-                else:
-                    lcd.show_message("Tecla", "Incorreta")
-                    buzzer.beep("wrong_key")
-                    sleep(2)
-
+        ######################## Nova Senha ########################
         elif current_state == 22:
-            senha = ""
-            while True:
-                lcd.show_message("Nova Senha:", senha)
-                key = keypad.read_key()
+            senha = read_codes("", "Nova Senha: ", "")
 
-                if key == "0" or key == "1" or key == "2" or key == "3" or key == "4" or\
-                    key == "5" or key == "6" or key == "7" or key == "8" or key == "9":
+            if senha == -1:
+                lcd.show_message("Operacao", "Cancelada!!!")
+                return_state(10)
 
-                    senha += key
-                    buzzer.beep("number")
+            else:
+                confirm("confirm", 23)
 
-                elif key == "con":
-                    passwd = senha
-                    current_state = 23
-                    write_json()
-                    buzzer.beep("confirm")
-                    break
-                elif key == "can":
-                    if senha == "":
-                        lcd.show_message("Operacao", "Cancelada!!!")
-                        senha = ""
-                        current_state = 1
-                        write_json()
-                        sleep(3)
-                        buzzer.beep("cancel")
-                        break
-                    else: #Remove last char from string
-                        senha = senha[:-1]
-                        buzzer.beep("number")
-
-                else:
-                    lcd.show_message("Tecla ", "Incorreta")
-                    buzzer.beep("wrong_key")
-                    sleep(2)
-
+        ######################## Confirma Nova Senha ########################
         elif current_state == 23:
-            senha = ""
-            while True:
-                lcd.show_message("Nova Senha:", senha)
-                key = keypad.read_key()
+            senha = read_codes("", "Confirme Senha: ", "")
 
-                if key == "0" or key == "1" or key == "2" or key == "3" or key == "4" or \
-                                key == "5" or key == "6" or key == "7" or key == "8" or key == "9":
+            if senha == -1:
+                lcd.show_message("Operacao", "Cancelada!!!")
+                return_state(10)
 
-                    senha += key
-                    buzzer.beep("number")
+            elif senha == passwd:
+                confirm("confirm", 0)
 
-                elif key == "con":
-                    buzzer.beep("confirm")
-                    if senha == passwd:
-                        current_state = 0
-                        write_json()
-                        break
-                    else:
-                        lcd.show_message("Senha", "Incorreta")
-                        current_state = 22
-                        write_json()
-
-                elif key == "can":
-                    if senha == "":
-                        lcd.show_message("Operacao", "Cancelada!!!")
-                        senha = ""
-                        current_state = 1
-                        write_json()
-                        sleep(3)
-                        buzzer.beep("cancel")
-                        break
-                    else:  # Remove last char from string
-                        senha = senha[:-1]
-                        buzzer.beep("number")
-
-                else:
-                    lcd.show_message("Tecla ", "Incorreta")
-                    buzzer.beep("wrong_key")
-                    sleep(2)
-
+            else:
+                lcd.show_message("Senha", "Incorreta")
+                return_state(22)
 
 if __name__ == "__main__":
     main()
