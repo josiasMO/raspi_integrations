@@ -27,18 +27,19 @@ def listen():
 
             elif received[:4] == b'7878':
 
+                #convert to array of int's
                 strpackage = ' '.join(received[i: i + 2] for i in range(0, len(received), 2))
                 strpackage = strpackage.split()
-
-
                 strpackage = [int(p, 16) for p in strpackage]
+
+                #print result
                 print('Veiculo', strpackage[4]<<8 | strpackage[5])
                 print('Motorista', strpackage[6]<<8 | strpackage[7])
                 print('Linha ', strpackage[8]<<8 | strpackage[9])
                 print('Inicio/Fim %d' % strpackage[10])
 
-
-                current_connection.send(data)
+                #send back the lenth
+                current_connection.send(received[4:6])
                 break
 
 

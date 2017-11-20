@@ -109,8 +109,9 @@ class GPRS(object):
                     r = encoder(data)
                     recv = self.__conn (r)
                     if recv is not None:
-                        if (len(recv) > 5):
-                            recv = len(recv)
+                        #the server should send back de lenth of the data received
+                        if (len(recv) != len(data)):
+                            recv = None
                         proc.terminate()
                 time.sleep(0.5)
         except socket.error as exc:
@@ -130,4 +131,4 @@ class GPRS(object):
 
 # if __name__ == "__main__":
 #     g = GPRS()
-#     g.send(['15','35','43', '0'])
+#     g.send(['0', '15','0', '35','0', '43', '0'])
