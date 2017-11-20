@@ -110,7 +110,7 @@ class GPRS(object):
                     recv = self.__conn (r)
                     if recv is not None:
                         #the server should send back de lenth of the data received
-                        if (len(recv) != len(data)):
+                        if (int(recv) != len(data)):
                             recv = None
                         proc.terminate()
                 time.sleep(0.5)
@@ -125,7 +125,7 @@ class GPRS(object):
             except subprocess.TimeoutExpired:
                 print('subprocess did not terminate in time')
             t.join()
-        print ('==Sent %s bytes==' % recv)
+        print ('==Received from server %s bytes==' % recv)
         return recv
 
 
