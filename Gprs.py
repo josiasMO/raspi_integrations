@@ -53,13 +53,21 @@ def crc16(datos, offset, length):
     return ctypes.c_ushort(~fcs).value
 
 def encoder(data):
-
-    strpackage = '7878' + '%002x' % len(data) + '19'
+    """encode sysjourney data
+    0x20, 0x20, data_lenth, packet_id, data0, data1, ...., datan, check_h, check_l, 0x0D, 0x0A
+    """
+    strpackage = '2020' + '%002x' % len(data) + '19'
     for elem in data:
         strpackage = strpackage + '%002x' % int(elem)
 
     send_data = binascii.unhexlify(strpackage)
-    send_chk = crc16(send_data[2:], 0, len(send_data) - 2)
+
+
+    chk_p = ' '.join(strpackage[i: i + 2] for i in range(0, len(strpackage), 2))
+    chk_p = chk_p.split()
+    chk_p = [int(p, 16) for p in chk_p]
+    send_chk = crc16(chk_p[2:], 0, len(chk_p) - 2)
+
     send_chk = bytearray([(send_chk & 0xFF00) >> 8, send_chk & 0x00FF])
     return (send_data + send_chk + b"\r\n")
 
@@ -129,6 +137,6 @@ class GPRS(object):
         return recv
 
 
-# if __name__ == "__main__":
-#     g = GPRS()
-#     g.send(['0', '15','0', '35','0', '43', '0'])
+if __name__ == "__main__":
+   g = GPRS()
+   g.send(['0', '15','0', '35','0', '43', '0'])

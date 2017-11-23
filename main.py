@@ -25,14 +25,15 @@ lcd = Lcd()
 keypad = Keypad()
 buzzer = Buzzer()
 gprs = GPRS()
-rfid = Rfid()
 ############################################
 
 ############ Rfid variables  ###############
 CARDS = ["[154, 99, 3, 197, 63]", "[151, 25, 214, 53, 109]"]
 KEYCHAINS = ["[213, 1, 9, 136, 85]", "[5, 214, 17, 136, 74]"]
 
-RFID_PRESENT = True
+RFID_PRESENT = False
+if RFID_PRESENT:
+    rfid = Rfid()
 lock = Lock()
 read_result = ""
 ############################################
@@ -250,10 +251,11 @@ def main():
                     lcd.show_message("Erro", "Envio")
                     buzzer.beep("wrong_key")
                     current_state = 0
+                    write_json()
                     break
                 else:
                     num+=1
-                    sleep(60)
+                    sleep(30)
 
         ######################## Jornada Encerrada / Envio dos Dados ########################
         elif current_state == 5:
@@ -274,18 +276,17 @@ def main():
                     recv = gprs.send([v[0], v[1], m[0], m[1], l[0], l[1], '0'])
                     if recv:
                         lcd.show_message("Jornada", "Encerrada")
-                        confirm("end_journey")
-                        buzzer.beep("end_journey")
-                        current_state = 0
+                        confirm("end_journey", 0)
                         break
                     elif(num == 4):
                         lcd.show_message("Erro", "Envio")
                         buzzer.beep("wrong_key")
                         current_state = 5
+                        write_json()
                         break
                     else:
                         num+=1
-                        sleep(60)
+                        sleep(30)
             else:
                 wrong_key()
 
