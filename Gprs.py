@@ -114,16 +114,18 @@ class GPRS(object):
         try:
             conn = serial.Serial("/dev/ttyS0", 115200, timeout=1)
             conn.flushInput()
-            #disable echo
-            conn.write('ATH0'.encode('utf-8')+b'\r\n')
-            sleep(.2)
             #get gprs time
             conn.write('AT+CCLK?'.encode('utf-8')+b'\r\n')
             conn.flush()
         except serial.SerialException:
             return False, None
 
-        time = conn.read(56).decode('utf-8').split('+CCLK: ')
+        received = conn.read(56).decode('utf-8').split('+CCLK: ')
+        for line in received:
+            if(line.startswith('"')):
+                time = line[:19]
+            else:
+                time = None
 
         #clean buffer and close pyserial
         conn.flushInput()
@@ -133,12 +135,12 @@ class GPRS(object):
         try:
             if (len(time) > 1):
                 #convert string to datetime
-                time = datetime.strptime(time[1], '"%y/%m/%d,%H:%M:%S"')
+                time = datetime.strptime(time, '"%y/%m/%d,%H:%M:%S"')
                 date_list = [(time.year & 0xFF00) >> 8, time.year & 0x00FF, \
                     time.month, time.day, time.hour, time.minute, time.second]
                 return date_list
             else: return False, None
-        except (IndexError,UnboundLocalError): return False, None
+        except (IndexError,UnboundLocalError,TypeError): return False, None
 
     def send(self,data):
         """start pppd subprocess, handle the data form user"""
@@ -175,8 +177,8 @@ class GPRS(object):
         return recv
 
 
-if __name__ == "__main__":
-   g = GPRS()
-   #g.send(['0', '15','0', '35','0', '43', '0'])
-   #time.sleep(2)
-   print(g.get_time())
+# if __name__ == "__main__":
+#    g = GPRS()
+#    g.send(['0', '15','0', '35','0', '43', '0'])
+#    time.sleep(2)
+#    print(g.get_time())
