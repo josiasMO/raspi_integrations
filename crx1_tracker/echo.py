@@ -73,30 +73,36 @@ def listen():
             elif received[:4] == b'2020':
 
                 #convert to array of int's
-                strpackage = ' '.join(received[i: i + 2] for i in range(0, len(received), 2))
-                strpackage = strpackage.split()
-                strpackage = [int(p, 16) for p in strpackage]
+                try:
+                    strpackage = ' '.join(received[i: i + 2] for i in range(0, len(received), 2))
+                    strpackage = strpackage.split()
+                    strpackage = [int(p, 16) for p in strpackage]
 
-                send_chk = crc16(strpackage[2:-4], 0, len(strpackage[2:-4]))
-                error_check = (strpackage[18] << 8) | strpackage[19]
+                    send_chk = crc16(strpackage[2:-4], 0, len(strpackage[2:-4]))
+                    error_check = (strpackage[18] << 8) | strpackage[19]
 
-                if (send_chk == error_check):
-                    print('Veiculo', strpackage[4]<<8 | strpackage[5])
-                    print('Motorista', strpackage[6]<<8 | strpackage[7])
-                    print('Linha ', strpackage[8]<<8 | strpackage[9])
-                    print('Inicio/Fim %d' % strpackage[10])
+                    if (send_chk == error_check):
+                        print('Veiculo', strpackage[4]<<8 | strpackage[5])
+                        print('Motorista', strpackage[6]<<8 | strpackage[7])
+                        print('Linha ', strpackage[8]<<8 | strpackage[9])
+                        print('Inicio/Fim %d' % strpackage[10])
 
-                    ano = strpackage[11]<<8 | strpackage[12]
-                    mes = strpackage[13]
-                    dia = strpackage[14]
+                        ano = strpackage[11]<<8 | strpackage[12]
+                        mes = strpackage[13]
+                        dia = strpackage[14]
 
-                    print ('Data: ' + str(date(ano, mes, dia)))
-                    print ('Hora: %d:%02d:%02d' % (strpackage[15], strpackage[16], strpackage[17]))
-                else:
-                    print('Erro checksum')
+                        print ('Data: ' + str(date(ano, mes, dia)))
+                        print ('Hora: %d:%02d:%02d' % (strpackage[15], strpackage[16], strpackage[17]))
+                    else:
+                        print('Erro checksum')
 
-                #send back the lenth
-                current_connection.send(received[4:6])
+                    #send back the lenth
+                    current_connection.send(received[4:6])
+                    current_connection.close()
+                except (IndexError,TypeError):
+                    print ("Erro nos dados recebidos")
+                    current_connection.send(b'01')
+                    current_connection.close()
                 break
             else:
                 current_connection.close()
