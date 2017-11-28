@@ -6,9 +6,12 @@ import threading
 import socket
 import os, sys
 import time
+from time import sleep
 import logging
 import ctypes
 import binascii
+import serial
+from datetime import datetime
 
 def crc16(datos, offset, length):
     crctab16 = (
@@ -102,6 +105,41 @@ class GPRS(object):
         for line in iter(proc.stdout.readline, b''):
             print('[PPPD]: {0}'.format(line.decode('utf-8')), end='')
 
+    def get_time(self):
+        """
+        Get time from gprs tracker, and clean the serial buffer
+        return a list with the date and time
+            [y_high, y_low, month, day, hour, minute, second ]
+        """
+        try:
+            conn = serial.Serial("/dev/ttyS0", 115200, timeout=1)
+            conn.flushInput()
+            #disable echo
+            conn.write('ATH0'.encode('utf-8')+b'\r\n')
+            sleep(.2)
+            #get gprs time
+            conn.write('AT+CCLK?'.encode('utf-8')+b'\r\n')
+            conn.flush()
+        except serial.SerialException:
+            return False, None
+
+        time = conn.read(56).decode('utf-8').split('+CCLK: ')
+
+        #clean buffer and close pyserial
+        conn.flushInput()
+        conn.flushOutput()
+        conn.close()
+        #check if the gprs tracker answered with the time
+        try:
+            if (len(time) > 1):
+                #convert string to datetime
+                time = datetime.strptime(time[1], '"%y/%m/%d,%H:%M:%S"')
+                date_list = [(time.year & 0xFF00) >> 8, time.year & 0x00FF, \
+                    time.month, time.day, time.hour, time.minute, time.second]
+                return date_list
+            else: return False, None
+        except (IndexError,UnboundLocalError): return False, None
+
     def send(self,data):
         """start pppd subprocess, handle the data form user"""
         proc = subprocess.Popen(['pppd','call','gprs'],
@@ -139,4 +177,6 @@ class GPRS(object):
 
 if __name__ == "__main__":
    g = GPRS()
-   g.send(['0', '15','0', '35','0', '43', '0'])
+   #g.send(['0', '15','0', '35','0', '43', '0'])
+   #time.sleep(2)
+   print(g.get_time())
