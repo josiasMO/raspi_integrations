@@ -255,7 +255,7 @@ def main():
                     break
                 else:
                     num+=1
-                    sleep(30)
+                    sleep(10)
 
         ######################## Jornada Encerrada / Envio dos Dados ########################
         elif current_state == 5:
@@ -286,7 +286,7 @@ def main():
                         break
                     else:
                         num+=1
-                        sleep(30)
+                        sleep(10)
             else:
                 wrong_key()
 
