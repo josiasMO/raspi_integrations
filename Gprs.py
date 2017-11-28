@@ -138,7 +138,7 @@ class GPRS(object):
                 time = datetime.strptime(time, '"%y/%m/%d,%H:%M:%S"')
                 date_list = [(time.year & 0xFF00) >> 8, time.year & 0x00FF, \
                     time.month, time.day, time.hour, time.minute, time.second]
-                return date_list
+                return [str(a) for a in date_list]
             else: return False, None
         except (IndexError,UnboundLocalError,TypeError): return False, None
 
@@ -158,7 +158,7 @@ class GPRS(object):
                     recv = self.__conn (r)
                     if recv is not None:
                         #the server should send back de lenth of the data received
-                        if (int(recv) != len(data)):
+                        if (int(recv, 16) != len(data)):
                             recv = None
                         proc.terminate()
                 time.sleep(0.5)
@@ -179,6 +179,6 @@ class GPRS(object):
 
 # if __name__ == "__main__":
 #    g = GPRS()
-#    g.send(['0', '15','0', '35','0', '43', '0'])
-#    time.sleep(2)
+#   #g.send(['0', '15','0', '35','0', '43', '0'])
+#    #time.sleep(2)
 #    print(g.get_time())

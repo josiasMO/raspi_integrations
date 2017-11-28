@@ -18,6 +18,7 @@ passwd = "33"
 codigo_veiculo = "33"
 codigo_motorista = ""
 codigo_linha = ""
+date_time = []
 ############################################
 
 ######### Instances of the Modules #########
@@ -36,6 +37,8 @@ if RFID_PRESENT:
     rfid = Rfid()
 lock = Lock()
 read_result = ""
+
+
 ############################################
 
 def convert_int(x):
@@ -156,7 +159,7 @@ def manage_read(linha, message1="", message2="", message_ini="Informe Codigo", c
     event.set()
 
 def main():
-    global current_state, passwd, codigo_motorista, codigo_linha, codigo_veiculo, read_result
+    global current_state, passwd, codigo_motorista, codigo_linha, codigo_veiculo, read_result, date_time
 
     read_json()
 
@@ -227,8 +230,8 @@ def main():
                 return_state(2)
             else:
                 codigo_linha = value
+                date_time = gprs.get_time()
                 confirm("confirm", 4)
-
         ######################## Envio dos Dados / Jornada Iniciada ########################
         elif current_state == 4:
             lcd.show_message("Enviando", "Dados")
@@ -240,8 +243,8 @@ def main():
                 v = convert_int(codigo_veiculo)
                 m = convert_int(codigo_motorista)
                 l = convert_int(codigo_linha)
-
-                recv = gprs.send([v[0], v[1], m[0], m[1], l[0], l[1], '1'])
+                data = [v[0], v[1], m[0], m[1], l[0], l[1], '1'] + date_time
+                recv = gprs.send(data)
                 if recv:
                     lcd.show_message("Dados", "Enviados")
                     lcd.show_message("Jornada", "Iniciada")
@@ -262,6 +265,7 @@ def main():
             lcd.show_message("Jornada", "em Progresso")
             key = keypad.read_key()
             if key == "fim":
+                date_time = gprs.get_time()
                 lcd.show_message("Encerrando", "Jornada")
                 buzzer.beep("end_journey")
                 ######HERE GOES THE CODE TO SEND THE DATA TO THE SERVER#####
@@ -272,8 +276,8 @@ def main():
                     v = convert_int(codigo_veiculo)
                     m = convert_int(codigo_motorista)
                     l = convert_int(codigo_linha)
-
-                    recv = gprs.send([v[0], v[1], m[0], m[1], l[0], l[1], '0'])
+                    data = [v[0], v[1], m[0], m[1], l[0], l[1], '0'] + date_time
+                    recv = gprs.send(data)
                     if recv:
                         lcd.show_message("Jornada", "Encerrada")
                         confirm("end_journey", 0)
