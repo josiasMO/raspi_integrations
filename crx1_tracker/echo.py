@@ -1,6 +1,7 @@
 import socket
 import binascii
 import ctypes
+from datetime import date
 
 def crc16(datos, offset, length):
     crctab16 = (
@@ -77,14 +78,20 @@ def listen():
                 strpackage = [int(p, 16) for p in strpackage]
 
                 send_chk = crc16(strpackage[2:-4], 0, len(strpackage[2:-4]))
-                error_check = (strpackage[11] << 8) | strpackage[12]
+                error_check = (strpackage[18] << 8) | strpackage[19]
 
                 if (send_chk == error_check):
-                    #print result
                     print('Veiculo', strpackage[4]<<8 | strpackage[5])
                     print('Motorista', strpackage[6]<<8 | strpackage[7])
                     print('Linha ', strpackage[8]<<8 | strpackage[9])
                     print('Inicio/Fim %d' % strpackage[10])
+
+                    ano = strpackage[11]<<8 | strpackage[12]
+                    mes = strpackage[13]
+                    dia = strpackage[14]
+
+                    print ('Data: ' + str(date(ano, mes, dia)))
+                    print ('Hora: %d:%02d:%02d' % (strpackage[15], strpackage[16], strpackage[17]))
                 else:
                     print('Erro checksum')
 
