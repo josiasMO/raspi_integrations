@@ -2,6 +2,7 @@ import socket
 import binascii
 import ctypes
 from datetime import date
+import logging
 
 def crc16(datos, offset, length):
     crctab16 = (
@@ -55,10 +56,8 @@ def listen():
         current_connection, address = connection.accept()
         while True:
 
-            data = current_connection.recv(2048)
+            data = current_connection.recv(256)
             received = binascii.hexlify(data)
-
-            print ("Received data: ",received)
 
             if data == 'quit\r\n':
                 current_connection.shutdown(1)
@@ -82,25 +81,25 @@ def listen():
                     error_check = (strpackage[18] << 8) | strpackage[19]
 
                     if (send_chk == error_check):
-                        print('Veiculo', strpackage[4]<<8 | strpackage[5])
-                        print('Motorista', strpackage[6]<<8 | strpackage[7])
-                        print('Linha ', strpackage[8]<<8 | strpackage[9])
-                        print('Inicio/Fim %d' % strpackage[10])
+                        logging.info(" Veiculo: %d", strpackage[4]<<8 | strpackage[5])
+                        logging.info(" Motorista: %d", strpackage[6]<<8 | strpackage[7])
+                        logging.info(" Linha: %d", strpackage[8]<<8 | strpackage[9])
+                        logging.info(" Inicio/Fim %d", strpackage[10])
 
                         ano = strpackage[11]<<8 | strpackage[12]
                         mes = strpackage[13]
                         dia = strpackage[14]
 
-                        print ('Data: ' + str(date(ano, mes, dia)))
-                        print ('Hora: %d:%02d:%02d' % (strpackage[15], strpackage[16], strpackage[17]))
-                    else:
-                        print('Erro checksum')
+                        logging.info(" Data:  %s", str(date(ano, mes, dia)))
+                        logging.info(" Hora: %d:%02d:%02d", strpackage[15], strpackage[16], strpackage[17])
 
+                    else:
+                        logging.error('ERRO CHECKSUM')
                     #send back the lenth
                     current_connection.send(received[4:6])
                     current_connection.close()
-                except (IndexError,TypeError):
-                    print ("Erro nos dados recebidos")
+                except (IndexError,TypeError) as e:
+                    logging.error('ERRO DADOS RECEBIDOS')
                     current_connection.send(b'01')
                     current_connection.close()
                 break
@@ -109,7 +108,10 @@ def listen():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(filename='/home/pi/sysjourney/crx1_tracker/echo_server.log',level=logging.DEBUG,
+                            format='%(levelname)s:%(asctime)s:%(message)s')
+
     try:
         listen()
     except KeyboardInterrupt:
-        pass
+        exit()
