@@ -118,7 +118,7 @@ class GPRS(object):
             conn.write('AT+CCLK?'.encode('utf-8')+b'\r\n')
             conn.flush()
         except serial.SerialException:
-            return False, None
+            return ['0']*7
 
         received = conn.read(56).decode('utf-8').split('+CCLK: ')
         for line in received:
@@ -139,8 +139,8 @@ class GPRS(object):
                 date_list = [(time.year & 0xFF00) >> 8, time.year & 0x00FF, \
                     time.month, time.day, time.hour, time.minute, time.second]
                 return [str(a) for a in date_list]
-            else: return False, None
-        except (IndexError,UnboundLocalError,TypeError): return False, None
+            else: return ['0']*7
+        except (IndexError,UnboundLocalError,TypeError): return ['0']*7
 
     def send(self,data):
         """start pppd subprocess, handle the data form user"""
@@ -178,7 +178,6 @@ class GPRS(object):
 
 
 # if __name__ == "__main__":
-#    g = GPRS()
-#   #g.send(['0', '15','0', '35','0', '43', '0'])
-#    #time.sleep(2)
-#    print(g.get_time())
+#     g = GPRS()
+#     g.send(['0', '15','0', '35','0', '43', '0'] + g.get_time())
+#     time.sleep(2)
