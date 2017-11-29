@@ -4,12 +4,14 @@ from time import sleep
 import json
 from threading import Thread, Lock, Event
 from queue import Queue
+import os
 
 from Lcd import Lcd
 from Keypad import Keypad
 from Buzzer import Buzzer
 from Gprs import GPRS
 from Rfid import Rfid
+
 
 
 ######### State Machine Variables ##########
@@ -310,6 +312,11 @@ def main():
                 buzzer.beep("confirm")
                 write_json()
 
+            elif key == "0":
+                current_state = 31
+                buzzer.beep("confirm")
+                write_json()
+
             elif key == "can":
                 cancel()
             else:
@@ -387,6 +394,32 @@ def main():
             else:
                 lcd.show_message("Senha", "Incorreta")
                 return_state(22)
+
+
+        ######################## Reiniciar Sistema ########################
+        elif current_state == 31:
+            lcd.show_message("Reiniciar", "Sistema")
+            sleep(1)
+            senha = read_codes("", "Informe Senha: ", "")
+
+            if senha == -1:
+                lcd.show_message("Operacao", "Cancelada!!!")
+                return_state(10)
+
+            elif senha == passwd:
+                confirm("confirm", 32)
+
+            else:
+                lcd.show_message("Senha", "Incorreta")
+                buzzer.beep("wrong_key")
+                sleep(2)
+
+        ######################## Reiniciando Sistema ########################
+        elif current_state == 32:
+            lcd.show_message("Reiniciando", "Sistema")
+            confirm("confirm", 0)
+            os.system('sudo reboot now')
+
 
 if __name__ == "__main__":
     main()
