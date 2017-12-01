@@ -55,10 +55,13 @@ def listen():
     while True:
         current_connection, address = connection.accept()
         while True:
-
-            data = current_connection.recv(256)
-            received = binascii.hexlify(data)
-
+            try:
+                data = current_connection.recv(256)
+                received = binascii.hexlify(data)
+            except Exception as msg:
+                logging.error('ERRO RECEBIMENTO DADOS: %s' % msg)
+                current_connection.close()
+                break
             if data == 'quit\r\n':
                 current_connection.shutdown(1)
                 current_connection.close()
