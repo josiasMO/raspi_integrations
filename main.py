@@ -50,7 +50,7 @@ def convert_int(x):
     return str(c), str(f)
 
 def write_json():
-    global current_state, passwd, codigo_motorista, codigo_linha, codigo_veiculo
+    global current_state, passwd, codigo_motorista, codigo_linha, codigo_veiculo, date_time
     data = {}
     data['vehicle'] = []
     data['vehicle'].append({
@@ -58,13 +58,15 @@ def write_json():
         'passwd': passwd,
         'codigo_veiculo': codigo_veiculo,
         'codigo_motorista': codigo_motorista,
-        'codigo_linha': codigo_linha
+        'codigo_linha': codigo_linha,
+        'date_time': date_time
+
     })
     with open('data.txt', 'w') as outfile:
         json.dump(data, outfile)
 
 def read_json():
-    global current_state, passwd, codigo_motorista, codigo_linha, codigo_veiculo
+    global current_state, passwd, codigo_motorista, codigo_linha, codigo_veiculo, date_time
     with open('data.txt') as json_file:
         data = json.load(json_file)
         current_state = data['vehicle'][0]['current_state']
@@ -72,6 +74,8 @@ def read_json():
         codigo_veiculo = data['vehicle'][0]['codigo_veiculo']
         codigo_motorista = data['vehicle'][0]['codigo_motorista']
         codigo_linha = data['vehicle'][0]['codigo_linha']
+        date_time = data['vehicle'][0]['date_time']
+
 
 def cancel():
     global current_state

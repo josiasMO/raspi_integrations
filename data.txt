@@ -1,1 +1,1 @@
-{"vehicle": [{"codigo_veiculo": "456", "passwd": "666", "codigo_linha": "2", "current_state": 5, "codigo_motorista": "1"}]}
+{"vehicle": [{"date_time": ["7", "225", "12", "1", "19", "23", "8"], "codigo_motorista": "1", "codigo_veiculo": "456", "passwd": "666", "codigo_linha": "2", "current_state": 0}]}
