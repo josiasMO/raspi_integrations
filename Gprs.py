@@ -93,7 +93,7 @@ class GPRS(object):
     def __conn(self, data):
         """Open tcp socket and send data to the specified host"""
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(35) #long timeout for gprs connections
+        s.settimeout(10) #long timeout for gprs connections
         s.connect((self.host, self.port))
         s.sendall(data)
         recv = s.recv(1024)
@@ -142,6 +142,43 @@ class GPRS(object):
             else: return ['0']*7
         except (IndexError,UnboundLocalError,TypeError): return ['0']*7
 
+
+    def get_terminalID(self):
+        """
+            Request product serial number identification(IMEI)
+            return a list with 8 integer numbers
+        """
+        try:
+            conn = serial.Serial("/dev/ttyS0", 115200, timeout=1)
+            conn.flushInput()
+            conn.write('ATE1'.encode('utf-8')+b'\r\n')
+            time.sleep(0.1)
+            #get gprs time
+            conn.write('AT+CGSN'.encode('utf-8')+b'\r\n')
+            conn.flush()
+
+            received = conn.read(56).decode('utf-8').split('AT+')
+            conn.write('ATE0'.encode('utf-8')+b'\r\n')
+
+            conn.flushInput()
+            conn.flushOutput()
+
+        except serial.SerialException:
+            print("Serial exeption during get imei")
+            return ['0']*8
+
+        for line in received:
+            if(line.startswith('CGSN')):
+                received = line[10:25]
+                received = '0'+received
+            else:
+                received = None
+                
+        received = [received[i:i+2] for i in range(0, len(received), 2)]
+
+        conn.close()
+        return received
+
     def send(self,data):
         """start pppd subprocess, handle the data form user"""
         proc = subprocess.Popen(['pppd','call','gprs'],
@@ -158,7 +195,7 @@ class GPRS(object):
                     recv = self.__conn (r)
                     if recv is not None:
                         #the server should send back de lenth of the data received
-                        if (int(recv, 16) != len(data)):
+                        if (int(recv,16) != len(data)):
                             recv = None
                         proc.terminate()
                 time.sleep(0.5)
@@ -177,7 +214,9 @@ class GPRS(object):
         return recv
 
 
-# if __name__ == "__main__":
-#     g = GPRS()
-#     g.send(['0', '15','0', '35','0', '43', '0'] + g.get_time())
-#     time.sleep(2)
+if __name__ == "__main__":
+    g = GPRS()
+    print (g.get_terminalID())
+
+    # g.send(['0', '15','0', '35','0', '43', '0'] + g.get_time())
+    # time.sleep(2)
