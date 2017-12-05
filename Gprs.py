@@ -153,7 +153,7 @@ class GPRS(object):
             conn.flushInput()
             conn.write('ATE1'.encode('utf-8')+b'\r\n')
             time.sleep(0.1)
-            #get gprs time
+            #get device imei
             conn.write('AT+CGSN'.encode('utf-8')+b'\r\n')
             conn.flush()
 
@@ -166,6 +166,8 @@ class GPRS(object):
         except serial.SerialException:
             print("Serial exeption during get imei")
             return ['0']*8
+        #close serial connection
+        conn.close()
 
         for line in received:
             if(line.startswith('CGSN')):
@@ -173,10 +175,11 @@ class GPRS(object):
                 received = '0'+received
             else:
                 received = None
-                
-        received = [received[i:i+2] for i in range(0, len(received), 2)]
+        if(received != None):
+            received = [received[i:i+2] for i in range(0, len(received), 2)]
+        else:
+            return ['0']*8
 
-        conn.close()
         return received
 
     def send(self,data):
@@ -214,9 +217,9 @@ class GPRS(object):
         return recv
 
 
-if __name__ == "__main__":
-    g = GPRS()
-    print (g.get_terminalID())
-
-    # g.send(['0', '15','0', '35','0', '43', '0'] + g.get_time())
-    # time.sleep(2)
+# if __name__ == "__main__":
+#     g = GPRS()
+#     print (g.get_terminalID())
+#
+#     # g.send(['0', '15','0', '35','0', '43', '0'] + g.get_time())
+#     # time.sleep(2)
