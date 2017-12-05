@@ -27,6 +27,7 @@ date_time = []
 lcd = Lcd()
 keypad = Keypad()
 buzzer = Buzzer()
+#gprs = GPRS('179.188.3.201', 9055)
 gprs = GPRS()
 ############################################
 
