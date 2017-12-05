@@ -27,8 +27,10 @@ date_time = []
 lcd = Lcd()
 keypad = Keypad()
 buzzer = Buzzer()
+#gprs = GPRS('179.188.3.201', 9055)
 gprs = GPRS()
 ############################################
+
 
 ############ Rfid variables  ###############
 CARDS = ["[154, 99, 3, 197, 63]", "[151, 25, 214, 53, 109]"]
@@ -39,7 +41,6 @@ if RFID_PRESENT:
     rfid = Rfid()
 lock = Lock()
 read_result = ""
-
 
 ############################################
 
@@ -165,7 +166,9 @@ def manage_read(linha, message1="", message2="", message_ini="Informe Codigo", c
     event.set()
 
 def main():
-    global current_state, passwd, codigo_motorista, codigo_linha, codigo_veiculo, read_result, date_time
+    global current_state, passwd, codigo_motorista, codigo_linha, codigo_veiculo, read_result, date_time, device_id
+
+    device_id = gprs.get_terminalID()
 
     read_json()
 
@@ -174,6 +177,8 @@ def main():
     sleep(3)
 
     while True:
+        if(device_id == ['0']*8):
+            device_id = gprs.get_terminalID()
 
         ########################Inicio########################
         if current_state == 0:
@@ -249,7 +254,7 @@ def main():
                 v = convert_int(codigo_veiculo)
                 m = convert_int(codigo_motorista)
                 l = convert_int(codigo_linha)
-                data = [v[0], v[1], m[0], m[1], l[0], l[1], '1'] + date_time
+                data = [v[0], v[1], m[0], m[1], l[0], l[1], '1'] + date_time + device_id
                 recv = gprs.send(data)
                 if recv:
                     lcd.show_message("Dados", "Enviados")
@@ -282,7 +287,7 @@ def main():
                     v = convert_int(codigo_veiculo)
                     m = convert_int(codigo_motorista)
                     l = convert_int(codigo_linha)
-                    data = [v[0], v[1], m[0], m[1], l[0], l[1], '0'] + date_time
+                    data = [v[0], v[1], m[0], m[1], l[0], l[1], '0'] + date_time + device_id
                     recv = gprs.send(data)
                     if recv:
                         lcd.show_message("Jornada", "Encerrada")

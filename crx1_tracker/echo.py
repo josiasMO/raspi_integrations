@@ -50,6 +50,8 @@ def crc16(datos, offset, length):
 def listen():
     connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     connection.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    #Trocar para a porta desejada
     connection.bind(('0.0.0.0', 5555))
     connection.listen(10)
     while True:
@@ -74,7 +76,7 @@ def listen():
 
             elif received[:4] == b'2020':
 
-                #convert to array of int's
+                #converte para array de inteiros
                 try:
                     strpackage = ' '.join(received[i: i + 2] for i in range(0, len(received), 2))
                     strpackage = strpackage.split()
@@ -102,7 +104,8 @@ def listen():
                         logging.info(" Imei:  %s", imei)
                     else:
                         logging.error('ERRO CHECKSUM')
-                    #send back the lenth
+
+                    #Retorna para o servidor apenas o tamanho do pacote
                     current_connection.send(received[4:6])
                     current_connection.close()
                 except (IndexError,TypeError, ValueError) as e:
@@ -115,7 +118,9 @@ def listen():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(filename='/home/pi/sysjourney/crx1_tracker/echo_server.log',level=logging.DEBUG,
+
+    # Trocar para o diretorio desejado
+    logging.basicConfig(filename='~/echo_server.log',level=logging.DEBUG,
                             format='%(levelname)s:%(asctime)s:%(message)s')
 
     try:
