@@ -79,10 +79,9 @@ def listen():
                     strpackage = ' '.join(received[i: i + 2] for i in range(0, len(received), 2))
                     strpackage = strpackage.split()
                     strpackage = [int(p, 16) for p in strpackage]
-
+                    package_leght = strpackage[2]
                     send_chk = crc16(strpackage[2:-4], 0, len(strpackage[2:-4]))
-                    error_check = (strpackage[18] << 8) | strpackage[19]
-
+                    error_check = (strpackage[package_leght+4] << 8) | strpackage[package_leght+5]
                     if (send_chk == error_check):
                         logging.info(" Veiculo: %d", strpackage[4]<<8 | strpackage[5])
                         logging.info(" Motorista: %d", strpackage[6]<<8 | strpackage[7])
@@ -96,12 +95,17 @@ def listen():
                         logging.info(" Data:  %s", str(date(ano, mes, dia)))
                         logging.info(" Hora: %d:%02d:%02d", strpackage[15], strpackage[16], strpackage[17])
 
+                        imei = ''
+                        for i in range(18,26):
+                            imei+=str(strpackage[i])
+
+                        logging.info(" Imei:  %s", imei)
                     else:
                         logging.error('ERRO CHECKSUM')
                     #send back the lenth
                     current_connection.send(received[4:6])
                     current_connection.close()
-                except (IndexError,TypeError) as e:
+                except (IndexError,TypeError, ValueError) as e:
                     logging.error('ERRO DADOS RECEBIDOS')
                     current_connection.send(b'01')
                     current_connection.close()
