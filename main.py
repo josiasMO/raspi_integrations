@@ -27,6 +27,7 @@ date_time = []
 lcd = Lcd()
 keypad = Keypad()
 buzzer = Buzzer()
+#gprs = GPRS("179.188.3.201", 9055)
 gprs = GPRS()
 ############################################
 
@@ -173,6 +174,8 @@ def main():
     buzzer.beep("welcome")
     sleep(3)
 
+    valid_date = True
+
     while True:
 
         ########################Inicio########################
@@ -237,6 +240,7 @@ def main():
             else:
                 codigo_linha = value
                 date_time = gprs.get_time()
+                print("Date time 1: ", date_time)
                 confirm("confirm", 4)
         ######################## Envio dos Dados / Jornada Iniciada ########################
         elif current_state == 4:
@@ -255,6 +259,7 @@ def main():
                     lcd.show_message("Dados", "Enviados")
                     lcd.show_message("Jornada", "Iniciada")
                     confirm("start_journey", 5)
+                    valid_date = True
                     break
                 elif(num == 4):
                     lcd.show_message("Erro", "Envio")
@@ -271,34 +276,43 @@ def main():
             lcd.show_message("Jornada", "em Progresso")
             key = keypad.read_key()
             if key == "fim":
-                date_time = gprs.get_time()
+                if valid_date:
+                    date_time = gprs.get_time()
+                    print("Date time 2: ", date_time)
+                    valid_date = False
                 lcd.show_message("Encerrando", "Jornada")
-                buzzer.beep("end_journey")
-                ######HERE GOES THE CODE TO SEND THE DATA TO THE SERVER#####
-                recv = []
-                num = 1
-                write_json()
-                while num<=4:
-                    v = convert_int(codigo_veiculo)
-                    m = convert_int(codigo_motorista)
-                    l = convert_int(codigo_linha)
-                    data = [v[0], v[1], m[0], m[1], l[0], l[1], '0'] + date_time
-                    recv = gprs.send(data)
-                    if recv:
-                        lcd.show_message("Jornada", "Encerrada")
-                        confirm("end_journey", 0)
-                        break
-                    elif(num == 4):
-                        lcd.show_message("Erro", "Envio")
-                        buzzer.beep("wrong_key")
-                        current_state = 5
-                        write_json()
-                        break
-                    else:
-                        num+=1
-                        sleep(10)
+                confirm("confirm", 6)
+            elif key == "can":
+                cancel()
             else:
                 wrong_key()
+
+        ######################## Jornada Encerrada / Envio dos Dados ########################
+        elif current_state == 6:
+            ######HERE GOES THE CODE TO SEND THE DATA TO THE SERVER#####
+            recv = []
+            num = 1
+            write_json()
+            while num<=4:
+                v = convert_int(codigo_veiculo)
+                m = convert_int(codigo_motorista)
+                l = convert_int(codigo_linha)
+                data = [v[0], v[1], m[0], m[1], l[0], l[1], '0'] + date_time
+                recv = gprs.send(data)
+                if recv:
+                    lcd.show_message("Jornada", "Encerrada")
+                    confirm("end_journey", 0)
+                    break
+                elif(num == 4):
+                    lcd.show_message("Erro", "Envio")
+                    buzzer.beep("wrong_key")
+                    current_state = 5
+                    valid_date = False
+                    write_json()
+                    break
+                else:
+                    num+=1
+                    sleep(10)
 
         ######################## MENU FUNCAO ########################
         elif current_state == 10:
