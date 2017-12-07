@@ -94,6 +94,17 @@ def listen():
                         mes = strpackage[13]
                         dia = strpackage[14]
 
+                        #     //0x00 = tudo ok
+                        #     //0x08 = identicador não cadastrado
+                        #     //0x09 = veículo ocupado por outro motorista
+                        #     //0x0A = motorista não cadastrado
+                        #     //0x0B = motorista em outro veículo
+                        #     //0x0C = linha não cadastrada
+                        #     //0x0D = veículo em outra linha
+                        #     //0x0E = combinação veiculo x motorista já cadastrada
+                        #     //0x0F = jornada não criada antes de finalizar
+                        #    //0xFF = Erro desconhecido
+
                         logging.info(" Data:  %s", str(date(ano, mes, dia)))
                         logging.info(" Hora: %d:%02d:%02d", strpackage[15], strpackage[16], strpackage[17])
 
@@ -106,11 +117,11 @@ def listen():
                         logging.error('ERRO CHECKSUM')
 
                     #Retorna para o servidor apenas o tamanho do pacote
-                    current_connection.send(received[4:6])
+                    current_connection.send(binascii.unhexlify('00'))
                     current_connection.close()
                 except (IndexError,TypeError, ValueError) as e:
                     logging.error('ERRO DADOS RECEBIDOS')
-                    current_connection.send(b'01')
+                    current_connection.send(binascii.unhexlify('FF'))
                     current_connection.close()
                 break
             else:
@@ -120,7 +131,7 @@ def listen():
 if __name__ == "__main__":
 
     # Trocar para o diretorio desejado
-    logging.basicConfig(filename='~/echo_server.log',level=logging.DEBUG,
+    logging.basicConfig(filename='/home/pi/sysjourney/server/server.log',level=logging.DEBUG,
                             format='%(levelname)s:%(asctime)s:%(message)s')
 
     try:

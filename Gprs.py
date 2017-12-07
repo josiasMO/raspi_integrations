@@ -197,8 +197,18 @@ class GPRS(object):
                     r = encoder(data)
                     recv = self.__conn (r)
                     if recv is not None:
-                        #the server should send back de lenth of the data received
-                        if (int(recv,16) != len(data)):
+                        #the server should send back:
+                        #     //0x00 = tudo ok
+                        #     //0x08 = identicador não cadastrado
+                        #     //0x09 = veículo ocupado por outro motorista
+                        #     //0x0A = motorista não cadastrado
+                        #     //0x0B = motorista em outro veículo
+                        #     //0x0C = linha não cadastrada
+                        #     //0x0D = veículo em outra linha
+                        #     //0x0E = combinação veiculo x motorista já cadastrada
+                        #     //0x0F = jornada não criada antes de finalizar
+                        #    //0xFF = Erro desconhecido
+                        if ord(recv) not in [0, 8 ,9, 10, 11, 12 ,13 , 14, 15 ,255]:
                             recv = None
                         proc.terminate()
                 time.sleep(0.5)
@@ -214,7 +224,7 @@ class GPRS(object):
                 print('subprocess did not terminate in time')
             t.join()
         print ('==Received from server %s bytes==' % recv)
-        return recv
+        return ord(recv)
 
 
 # if __name__ == "__main__":
