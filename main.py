@@ -27,11 +27,7 @@ date_time = []
 lcd = Lcd()
 keypad = Keypad()
 buzzer = Buzzer()
-<<<<<<< HEAD
 #gprs = GPRS("179.188.3.201", 9055)
-=======
-#gprs = GPRS('179.188.3.201', 9055)
->>>>>>> 1685abbf7abe7c8b0a41f67d280c854817ece940
 gprs = GPRS()
 ############################################
 
