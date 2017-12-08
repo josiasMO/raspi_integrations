@@ -177,10 +177,12 @@ def main():
     sleep(3)
 
     valid_date = True
+    valid_imei = False
 
     while True:
-        if(device_id == ['0']*8):
+        if(device_id == ['0']*8 or valid_imei):
             device_id = gprs.get_terminalID()
+            valid_imei = False
 
         ########################Inicio########################
         if current_state == 0:
@@ -258,21 +260,62 @@ def main():
                 l = convert_int(codigo_linha)
                 data = [v[0], v[1], m[0], m[1], l[0], l[1], '1'] + date_time + device_id
                 recv = gprs.send(data)
-                if recv:
+                if not recv:
+                    lcd.show_message("Falha no", "Envio")
+                    num += 1
+
+                    if (num == 4):
+                        lcd.show_message("Erro", "Envio")
+                        buzzer.beep("wrong_key")
+                        current_state = 0
+                        write_json()
+                        break
+                    else:
+                        sleep(10)
+                        lcd.show_message("Enviando", "Dados")
+
+                # 0xFA = tudo ok
+                elif recv == 250:
                     lcd.show_message("Dados", "Enviados")
                     lcd.show_message("Jornada", "Iniciada")
                     confirm("start_journey", 5)
                     valid_date = True
                     break
-                elif(num == 4):
-                    lcd.show_message("Erro", "Envio")
-                    buzzer.beep("wrong_key")
-                    current_state = 0
-                    write_json()
+
+                # 0x0A = motorista não cadastrado
+                elif recv == 10:
+                    lcd.show_message("Motorista", "Desconhecido")
+                    confirm("cancel", 2)
+                    sleep(2)
                     break
+
+                # 0x0C = linha não cadastrada
+                elif recv == 12:
+                    lcd.show_message("Linha", "Desconhecida")
+                    confirm("cancel", 3)
+                    sleep(2)
+                    break
+
+                # 0x08 = identicador não cadastrado
+                elif recv == 8:
+                    lcd.show_message("Veiculo nao", "Cadastrado")
+                    confirm("cancel", 0)
+                    valid_imei = True
+                    sleep(2)
+                    break
+
+                # 0x09 = veículo ocupado por outro motorista
+                # 0x0B = motorista em outro veículo
+                # 0x0D = veículo em outra linha
+                # 0x0E = combinação veiculo x motorista já cadastrada
+                # 0x0F = jornada não criada antes de finalizar
+                # 0xFF = Erro desconhecido
                 else:
-                    num+=1
-                    sleep(10)
+                    lcd.show_message("Erro na", "Operacao")
+                    cancel()
+                    sleep(2)
+
+
 
         ######################## Jornada Encerrada / Envio dos Dados ########################
         elif current_state == 5:
@@ -300,7 +343,7 @@ def main():
                 v = convert_int(codigo_veiculo)
                 m = convert_int(codigo_motorista)
                 l = convert_int(codigo_linha)
-                data = [v[0], v[1], m[0], m[1], l[0], l[1], '0'] + date_time
+                data = [v[0], v[1], m[0], m[1], l[0], l[1], '0'] + date_time + device_id
                 recv = gprs.send(data)
                 if recv:
                     lcd.show_message("Jornada", "Encerrada")

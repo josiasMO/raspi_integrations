@@ -208,7 +208,7 @@ class GPRS(object):
                         #     //0x0E = combinação veiculo x motorista já cadastrada
                         #     //0x0F = jornada não criada antes de finalizar
                         #    //0xFF = Erro desconhecido
-                        if ord(recv) not in [0, 8 ,9, 10, 11, 12 ,13 , 14, 15 ,255]:
+                        if ord(recv) not in [250, 8 ,9, 10, 11, 12 ,13 , 14, 15 ,255]:
                             recv = None
                         proc.terminate()
                 time.sleep(0.5)
@@ -224,8 +224,10 @@ class GPRS(object):
                 print('subprocess did not terminate in time')
             t.join()
         print ('==Received from server %s bytes==' % recv)
-        return ord(recv)
-
+        if recv is not None:
+            return ord(recv)
+        else:
+            return None
 
 # if __name__ == "__main__":
 #     g = GPRS()
