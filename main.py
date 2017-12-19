@@ -27,8 +27,8 @@ date_time = []
 lcd = Lcd()
 keypad = Keypad()
 buzzer = Buzzer()
-#gprs = GPRS("179.188.3.201", 9055)
-gprs = GPRS()
+gprs = GPRS("179.188.3.201", 9091)
+#gprs = GPRS()
 ############################################
 
 
@@ -314,6 +314,7 @@ def main():
                     lcd.show_message("Erro na", "Operacao")
                     cancel()
                     sleep(2)
+                    break
 
 
 
