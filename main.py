@@ -201,22 +201,22 @@ def main():
                 wrong_key()
 
         ######################## Confirma Codigo do Veiculo ########################
-        elif current_state == 1:
-            lcd.show_message("Codigo Veiculo: ", str(codigo_veiculo))
-            sleep(3)
-            lcd.show_message("Pressione", "Confirma")
-            key = keypad.read_key()
-            if key == "con":
-                confirm("confirm", 2)
-
-            elif key == "can":
-                return_state(0)
-
-            else:
-                wrong_key()
+        # elif current_state == 1:
+        #     lcd.show_message("Codigo Veiculo: ", str(codigo_veiculo))
+        #     sleep(3)
+        #     lcd.show_message("Pressione", "Confirma")
+        #     key = keypad.read_key()
+        #     if key == "con":
+        #         confirm("confirm", 2)
+        #
+        #     elif key == "can":
+        #         return_state(0)
+        #
+        #     else:
+        #         wrong_key()
 
         ######################## Informa Codigo do Motorista ########################
-        elif current_state == 2:
+        elif current_state == 1:
             thread = Thread(target=manage_read,
                             args=(False, "do Motorista: ", "Cod Motorista: ", "Informe Codigo", codigo_motorista))
             thread.start()
@@ -227,13 +227,13 @@ def main():
             # value = read_codes("do Motorista: ", "Cod Motorista: ", current_val=codigo_motorista)
             if value == -1:
                 codigo_motorista = ""
-                return_state(1)
+                return_state(0)
             else:
                 codigo_motorista = value
-                confirm("confirm", 3)
+                confirm("confirm", 2)
 
         ######################## Informa Codigo da Linha ########################
-        elif current_state == 3:
+        elif current_state == 2:
             thread = Thread(target=manage_read,
                              args=(True, "da Linha: ", "Cod da Linha: ", "Informe Codigo", codigo_linha))
             thread.start()
@@ -242,13 +242,13 @@ def main():
             read_result = ""
             if value == -1:
                 codigo_linha = ""
-                return_state(2)
+                return_state(1)
             else:
                 codigo_linha = value
                 date_time = gprs.get_time()
-                confirm("confirm", 4)
+                confirm("confirm", 3)
         ######################## Envio dos Dados / Jornada Iniciada ########################
-        elif current_state == 4:
+        elif current_state == 3:
             lcd.show_message("Enviando", "Dados")
             ######HERE GOES THE CODE TO SEND THE DATA TO THE SERVER#####
             write_json()
@@ -278,21 +278,21 @@ def main():
                 elif recv == 250:
                     lcd.show_message("Dados", "Enviados")
                     lcd.show_message("Jornada", "Iniciada")
-                    confirm("start_journey", 5)
+                    confirm("start_journey", 4)
                     valid_date = True
                     break
 
                 # 0x0A = motorista não cadastrado
                 elif recv == 10:
                     lcd.show_message("Motorista", "Desconhecido")
-                    confirm("cancel", 2)
+                    confirm("cancel", 1)
                     sleep(2)
                     break
 
                 # 0x0C = linha não cadastrada
                 elif recv == 12:
                     lcd.show_message("Linha", "Desconhecida")
-                    confirm("cancel", 3)
+                    confirm("cancel", 2)
                     sleep(2)
                     break
 
@@ -319,7 +319,7 @@ def main():
 
 
         ######################## Jornada Encerrada / Envio dos Dados ########################
-        elif current_state == 5:
+        elif current_state == 4:
             lcd.show_message("Jornada", "em Progresso")
             key = keypad.read_key()
             if key == "fim":
@@ -328,14 +328,14 @@ def main():
                     valid_date = False
                 lcd.show_message("Encerrando", "Jornada")
 
-                confirm("confirm", 6)
+                confirm("confirm", 5)
             elif key == "can":
                 cancel()
             else:
                 wrong_key()
 
         ######################## Jornada Encerrada / Envio dos Dados ########################
-        elif current_state == 6:
+        elif current_state == 5:
             ######HERE GOES THE CODE TO SEND THE DATA TO THE SERVER#####
             recv = []
             num = 1
@@ -353,7 +353,7 @@ def main():
                 elif(num == 4):
                     lcd.show_message("Erro", "Envio")
                     buzzer.beep("wrong_key")
-                    current_state = 5
+                    current_state = 4
                     valid_date = False
                     write_json()
                     break
