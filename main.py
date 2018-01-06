@@ -36,7 +36,11 @@ gprs = GPRS("179.188.3.201", 9091)
 CARDS = ["[154, 99, 3, 197, 63]", "[151, 25, 214, 53, 109]"]
 KEYCHAINS = ["[213, 1, 9, 136, 85]", "[5, 214, 17, 136, 74]"]
 
-RFID_PRESENT = False
+DRIVERS_ID = [100, 101]
+LINE_ID = [222, 223]
+
+
+RFID_PRESENT = True
 if RFID_PRESENT:
     rfid = Rfid()
 lock = Lock()
@@ -134,15 +138,15 @@ def read_codes(message1, message2, message_ini="Informe Codigo", current_val="",
             wrong_key()
 
 def read_rfid(event, linha):
-    valid = False
     value = ""
     while (not event.is_set()):
         uid = str(rfid.read_rfid(event))
         if (uid in KEYCHAINS) and linha:
-            value = KEYCHAINS.index(str(uid)) + 1
+
+            value = LINE_ID[KEYCHAINS.index(str(uid))]
             break
         elif (uid in CARDS) and not linha:
-            value = CARDS.index(str(uid)) + 1
+            value = DRIVERS_ID[CARDS.index(str(uid))]
             break
     return str(value)
 
@@ -200,20 +204,6 @@ def main():
             else:
                 wrong_key()
 
-        ######################## Confirma Codigo do Veiculo ########################
-        # elif current_state == 1:
-        #     lcd.show_message("Codigo Veiculo: ", str(codigo_veiculo))
-        #     sleep(3)
-        #     lcd.show_message("Pressione", "Confirma")
-        #     key = keypad.read_key()
-        #     if key == "con":
-        #         confirm("confirm", 2)
-        #
-        #     elif key == "can":
-        #         return_state(0)
-        #
-        #     else:
-        #         wrong_key()
 
         ######################## Informa Codigo do Motorista ########################
         elif current_state == 1:
@@ -247,6 +237,7 @@ def main():
                 codigo_linha = value
                 date_time = gprs.get_time()
                 confirm("confirm", 3)
+
         ######################## Envio dos Dados / Jornada Iniciada ########################
         elif current_state == 3:
             lcd.show_message("Enviando", "Dados")
@@ -275,7 +266,7 @@ def main():
                         lcd.show_message("Enviando", "Dados")
 
                 # 0xFA = tudo ok
-                elif recv == 250:
+                elif recv == 250 or recv == 9 or recv == 11 or recv == 13 or recv == 14:
                     lcd.show_message("Dados", "Enviados")
                     lcd.show_message("Jornada", "Iniciada")
                     confirm("start_journey", 4)
@@ -304,19 +295,12 @@ def main():
                     sleep(2)
                     break
 
-                # 0x09 = veículo ocupado por outro motorista
-                # 0x0B = motorista em outro veículo
-                # 0x0D = veículo em outra linha
-                # 0x0E = combinação veiculo x motorista já cadastrada
-                # 0x0F = jornada não criada antes de finalizar
                 # 0xFF = Erro desconhecido
                 else:
                     lcd.show_message("Erro na", "Operacao")
                     cancel()
                     sleep(2)
                     break
-
-
 
         ######################## Jornada Encerrada / Envio dos Dados ########################
         elif current_state == 4:
@@ -365,14 +349,14 @@ def main():
         elif current_state == 10:
             lcd.show_message("Selecionar", "Funcao")
             sleep(3)
-            lcd.show_message("1- Cod. Veiculo", "2- Alterar Senha")
+            lcd.show_message("0- Reiniciar", "1- Alterar Senha")
             key = keypad.read_key()
-            if key == "1":
-                current_state = 11
-                buzzer.beep("confirm")
-                write_json()
+            # if key == "1":
+            #     current_state = 11
+            #     buzzer.beep("confirm")
+            #     write_json()
 
-            elif key == "2":
+            if key == "1":
                 current_state = 21
                 buzzer.beep("confirm")
                 write_json()
@@ -386,36 +370,6 @@ def main():
                 cancel()
             else:
                 wrong_key()
-
-        ######################## ALTERAR CODIGO DO VEICULO ########################
-        ######################## Informa Senha Atual ########################
-        elif current_state == 11:
-            senha = read_codes("", "Informe Senha: ", "")
-
-            if senha == -1:
-                lcd.show_message("Operacao", "Cancelada!!!")
-                return_state(10)
-
-            elif senha == passwd:
-                confirm("confirm", 12)
-
-            else:
-                lcd.show_message("Senha", "Incorreta")
-                buzzer.beep("wrong_key")
-                sleep(2)
-
-        ######################## Informa Codigo da Veiculo ########################
-        elif current_state == 12:
-            value = read_codes("do Veiculo:", "Cod. Veiculo", current_val=codigo_veiculo)
-            if value == -1:
-                codigo_veiculo = ""
-                return_state(1)
-            else:
-                codigo_veiculo = value
-                confirm("confirm")
-                sleep(3)
-                lcd.show_message("Cod Veiculo", "Alterado")
-                confirm("confirm", 0)
 
         ######################## ALTERAR SENHA ########################
         ######################## Informa Senha Atual ########################

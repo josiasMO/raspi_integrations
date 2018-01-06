@@ -23,8 +23,8 @@ class Rfid(object):
                     return uid
         return None
 
-# if __name__ == '__main__':
-#     rfid = Rfid()
-#
-#     while True:
-#         print(rfid.read_rfid())
+if __name__ == '__main__':
+    rfid = Rfid()
+
+    while True:
+        print(rfid.read_rfid())
