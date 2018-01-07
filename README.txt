@@ -1,6 +1,6 @@
 -----Instalation-----
 sudo apt-get update
-sudo apt-get install build-essential python-dev python-smbus python-pip git
+sudo apt-get install build-essential python-dev python-smbus python-pip git python3-dev
 sudo pip install RPi.GPIO
 sudo apt-get install python3-rpi.gpio
 sudo pip3 install pyserial
