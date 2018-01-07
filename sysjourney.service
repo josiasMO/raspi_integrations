@@ -1,0 +1,13 @@
+[Unit]
+Description=My Script Service
+After=multi-user.target
+
+[Service]
+Type=idle
+User=root
+WorkingDirectory=/home/pi/sysjourney/
+ExecStart=/usr/bin/python3 main.py > /home/pi/sysjourney/sysjourney.log 2>&1
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
