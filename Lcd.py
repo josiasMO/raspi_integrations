@@ -3,7 +3,7 @@ import Adafruit_CharLCD as LCD
 
 # LCD x Raspberry (GPIO) connections
 LCD_RS = 18 #18
-LCD_EN = 23 #23
+LCD_EN = 2 #2
 LCD_D4 = 12 #12
 LCD_D5 = 16 #16
 LCD_D6 = 20 #20

@@ -5,6 +5,7 @@ import json
 from threading import Thread, Lock, Event
 from queue import Queue
 import os
+import RPi.GPIO as GPIO
 
 from Lcd import Lcd
 from Keypad import Keypad
@@ -12,6 +13,8 @@ from Buzzer import Buzzer
 from Gprs import GPRS
 from Rfid import Rfid
 
+POS_CHAVE = 23
+RELE = 24
 
 
 ######### State Machine Variables ##########
@@ -81,7 +84,6 @@ def read_json():
         codigo_linha = data['vehicle'][0]['codigo_linha']
         date_time = data['vehicle'][0]['date_time']
 
-
 def cancel():
     global current_state
     current_state = 0
@@ -106,7 +108,6 @@ def return_state(state=None):
     current_state = state
     write_json()
     sleep(3)
-
 
 def read_codes(message1, message2, message_ini="Informe Codigo", current_val="", event=False):
     lcd.show_message(message_ini, message1)
@@ -169,7 +170,63 @@ def manage_read(linha, message1="", message2="", message_ini="Informe Codigo", c
     read_result = que.get()
     event.set()
 
+JOURNEY_CONTROL = False
+
+def start_journey():
+
+    global JOURNEY_CONTROL
+    JOURNEY_CONTROL = False
+
+    count = 0
+    while True:
+        sleep(0.5)
+        count += 1
+        if count > 240:
+            buzzer.beep("cancel")
+        if JOURNEY_CONTROL:
+            break
+
+        if GPIO.input(POS_CHAVE):
+            lcd.show_message("Desligando ", "Dispositivo")
+            sleep(1)
+            os.system('/sbin/shutdown -h now')
+            exit(1)
+
+
+def end_journey():
+
+    global JOURNEY_CONTROL
+    JOURNEY_CONTROL = False
+
+    while True:
+        sleep(1)
+
+        if JOURNEY_CONTROL:
+            break
+
+        if GPIO.input(POS_CHAVE):
+            buzzer.beep("cancel")
+
+
+def kill_thread(thread):
+
+    global JOURNEY_CONTROL
+
+    if thread.isAlive():
+        JOURNEY_CONTROL = True
+        sleep(1)
+
 def main():
+
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
+
+    GPIO.setup(POS_CHAVE, GPIO.IN)
+    GPIO.setup(RELE, GPIO.OUT)
+
+    GPIO.output(RELE, 1)
+
+
     global current_state, passwd, codigo_motorista, codigo_linha, codigo_veiculo, read_result, date_time, device_id
 
     device_id = gprs.get_terminalID()
@@ -191,8 +248,14 @@ def main():
         ########################Inicio########################
         if current_state == 0:
             lcd.show_message("Pressione", "Inicio")
+
+            thread_start = Thread(target=start_journey, )
+            thread_start.start()
+
+
             key = keypad.read_key()
             if key == "ini":
+                kill_thread(thread_start)
                 confirm("start_journey", 1)
 
             elif key == "fun":
@@ -207,6 +270,10 @@ def main():
 
         ######################## Informa Codigo do Motorista ########################
         elif current_state == 1:
+
+            thread_start = Thread(target=start_journey, )
+            thread_start.start()
+
             thread = Thread(target=manage_read,
                             args=(False, "do Motorista: ", "Cod Motorista: ", "Informe Codigo", codigo_motorista))
             thread.start()
@@ -214,16 +281,22 @@ def main():
             value = read_result
             read_result = ""
 
-            # value = read_codes("do Motorista: ", "Cod Motorista: ", current_val=codigo_motorista)
             if value == -1:
+                kill_thread(thread_start)
                 codigo_motorista = ""
                 return_state(0)
             else:
+                kill_thread(thread_start)
                 codigo_motorista = value
                 confirm("confirm", 2)
 
+
         ######################## Informa Codigo da Linha ########################
         elif current_state == 2:
+
+            thread_start = Thread(target=start_journey, )
+            thread_start.start()
+
             thread = Thread(target=manage_read,
                              args=(True, "da Linha: ", "Cod da Linha: ", "Informe Codigo", codigo_linha))
             thread.start()
@@ -231,9 +304,11 @@ def main():
             value = read_result
             read_result = ""
             if value == -1:
+                kill_thread(thread_start)
                 codigo_linha = ""
                 return_state(1)
             else:
+                kill_thread(thread_start)
                 codigo_linha = value
                 date_time = gprs.get_time()
                 confirm("confirm", 3)
@@ -304,17 +379,23 @@ def main():
 
         ######################## Jornada Encerrada / Envio dos Dados ########################
         elif current_state == 4:
+
+            thread_end = Thread(target=end_journey, )
+            thread_end.start()
+
             lcd.show_message("Jornada", "em Progresso")
             key = keypad.read_key()
             if key == "fim":
                 if valid_date:
                     date_time = gprs.get_time()
                     valid_date = False
-                lcd.show_message("Encerrando", "Jornada")
 
+                kill_thread(thread_end)
+                lcd.show_message("Encerrando", "Jornada")
                 confirm("confirm", 5)
-            elif key == "can":
-                cancel()
+
+            # elif key == "can":
+            #     cancel()
             else:
                 wrong_key()
 

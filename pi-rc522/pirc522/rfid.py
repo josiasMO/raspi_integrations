@@ -8,13 +8,13 @@ import spidev
 import RPi.GPIO as GPIO
 SPIClass = spidev.SpiDev
 def_pin_rst = 25
-def_pin_irq = 24
+def_pin_irq = 3
 def_pin_mode = GPIO.BCM
 
 class RFID(object):
     pin_rst = 25
     pin_ce = 0
-    pin_irq = 24
+    pin_irq = 3
 
     mode_idle = 0x00
     mode_auth = 0x0E
