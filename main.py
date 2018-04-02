@@ -324,7 +324,10 @@ def main():
                 v = convert_int(codigo_veiculo)
                 m = convert_int(codigo_motorista)
                 l = convert_int(codigo_linha)
-                data = [v[0], v[1], m[0], m[1], l[0], l[1], '1'] + date_time + device_id
+                # data = [v[0], v[1], m[0], m[1], l[0], l[1], '1'] + date_time + device_id
+                data = [m[0],m[1], '0', '0', '0', '0', '0', '0', '0', '0', l[0], l[1], '1'] + date_time + device_id
+                print (device_id)
+                print(data)
                 recv = gprs.send(data)
                 if not recv:
                     lcd.show_message("Falha no", "Envio")
@@ -409,7 +412,8 @@ def main():
                 v = convert_int(codigo_veiculo)
                 m = convert_int(codigo_motorista)
                 l = convert_int(codigo_linha)
-                data = [v[0], v[1], m[0], m[1], l[0], l[1], '0'] + date_time + device_id
+                # data = [v[0], v[1], m[0], m[1], l[0], l[1], '0'] + date_time + device_id
+                data = [m[0],m[1], '0', '0', '0', '0', '0', '0', '0', '0', l[0], l[1], '0'] + date_time + device_id
                 recv = gprs.send(data)
                 if recv:
                     lcd.show_message("Jornada", "Encerrada")

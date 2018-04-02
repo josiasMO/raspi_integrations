@@ -136,7 +136,7 @@ class GPRS(object):
             if (len(time) > 1):
                 #convert string to datetime
                 time = datetime.strptime(time, '"%y/%m/%d,%H:%M:%S"')
-                date_list = [(time.year & 0xFF00) >> 8, time.year & 0x00FF, \
+                date_list = [time.year - 2000, \
                     time.month, time.day, time.hour, time.minute, time.second]
                 return [str(a) for a in date_list]
             else: return ['0']*7
@@ -231,7 +231,7 @@ class GPRS(object):
 
 # if __name__ == "__main__":
 #     g = GPRS()
-#     print (g.get_terminalID())
+#     print (g.get_time())
 #
 #     # g.send(['0', '15','0', '35','0', '43', '0'] + g.get_time())
 #     # time.sleep(2)
