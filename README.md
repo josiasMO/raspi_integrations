@@ -1,4 +1,4 @@
-# SysJourney - Raspberry Pi Integrations
+# Raspberry Pi Integrations
 
 This project shows integrations between Raspberry Pi and the following devices:
 
@@ -30,7 +30,7 @@ It has also a real example, using multiple threads in Python and connecting all 
 
 3) CRX1 Tracker:
     
-        cd ~/sysjourney/crx1_tracker
+        cd ~/raspi_integrations/crx1_tracker
         chmod +x ./ppp-creator.sh
         sudo ./ppp-creator.sh APN ttySERIAL
 
@@ -41,5 +41,5 @@ It has also a real example, using multiple threads in Python and connecting all 
             P4 SPI
               Enable: Yes
                 
-        cd ~/sysjourney/pi-rcr22/
+        cd ~/raspi_integrations/pi-rcr22/
         sudo python3 setup.py install
